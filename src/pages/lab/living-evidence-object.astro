@@ -1,0 +1,50 @@
+---
+// Demo route for the Living Evidence Object v0.1 experience.
+// Standalone on purpose: it does NOT touch the ExperiencePack contract or any
+// existing Topic, so the interaction can be felt before topic-wiring.
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import LivingEvidenceObject from "../../components/experiences/LivingEvidenceObject.astro";
+
+const config = {
+  kicker: "EVIDENCE / QR PAYMENT",
+  title: "The square on the counter is not the payment.",
+  statement:
+    "This is a real, weathered merchant QR plaque — stuck down with tape, scuffed from use. The printed code is only the front door. What your money crosses behind it is the actual story.",
+  objectLabel:
+    "A weathered plastic merchant QR payment plaque stuck to a counter with packing tape.",
+  hint: "Drag to turn it. Tap a marker to read a detail.",
+  hotspots: [
+    {
+      x: 50,
+      y: 44,
+      title: "The printed square",
+      detail:
+        "Only the front door. The code points to an account and a route; it does not certify that the road behind it is clear.",
+    },
+    {
+      x: 24,
+      y: 22,
+      title: "Tape, not a stand",
+      detail:
+        "Stuck down with ordinary packing tape. This is a used object in a real place, not a designed product shot.",
+    },
+    {
+      x: 76,
+      y: 74,
+      title: "Worn edge",
+      detail:
+        "Scuffs and a lifted corner show it has been here a while — evidence of use, not a render.",
+    },
+  ],
+};
+---
+
+<SiteLayout
+  title="Living Evidence Object — demo"
+  description="A first-screen, draggable real-world object. Drag to rotate, tap a marker for detail."
+  robots="noindex,nofollow"
+  bodyClass="leo-demo"
+  locale="en"
+>
+  <LivingEvidenceObject config={config} locale="en" />
+</SiteLayout>

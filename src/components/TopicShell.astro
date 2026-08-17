@@ -1,0 +1,478 @@
+---
+import type { SiteTopic } from "../data/topics.ts";
+import type { Locale } from "../lib/i18n.ts";
+import { t } from "../data/ui-strings.ts";
+import AnalyticsBridge from "./AnalyticsBridge.astro";
+import FeedbackForm from "./FeedbackForm.astro";
+import RelatedList from "./RelatedList.astro";
+import ShareControls from "./ShareControls.astro";
+import SourceList from "./SourceList.astro";
+
+interface Props {
+  topic: SiteTopic;
+  locale: Locale;
+}
+
+const { topic, locale } = Astro.props;
+const isFictional = topic.review?.fictional === true;
+const shareText = topic.shareText;
+const topicStyle = [
+  `--topic-bg:${topic.experience.palette.background}`,
+  `--topic-ink:${topic.experience.palette.ink}`,
+  `--topic-accent:${topic.experience.palette.accent}`,
+  `--topic-secondary:${topic.experience.palette.secondary ?? topic.experience.palette.accent}`,
+  `--topic-highlight:${topic.experience.palette.highlight ?? "#ffffff"}`,
+  `--topic-hero-ink:${topic.experience.palette.heroInk ?? "#ffffff"}`,
+].join(";");
+const lang = t;
+---
+
+<article class:list={["topic", `topic--${topic.slug}`]} style={topicStyle}>
+  <AnalyticsBridge topicSlug={topic.slug} />
+  <header class="topic-hero">
+    <div class="hero-copy">
+      <p class="eyebrow">{topic.eyebrow}</p>
+      <h1>{topic.openingQuestion}</h1>
+      <p class="deck">{topic.deck}</p>
+      <a class="hero-action" href="#interaction">
+        {topic.primaryActionLabel}
+        <span aria-hidden="true">{lang(locale, "topic.heroActionDown")}</span>
+      </a>
+      <div class="hero-meta" aria-label="Review metadata">
+        <span>{topic.effort}</span>
+        <span>{lang(locale, "topic.workingAnswerKicker").split(" / ")[1] ?? "Working Answer"}</span>
+        <span>{lang(locale, "topic.metaLastReviewed")} {topic.lastReviewed}</span>
+      </div>
+    </div>
+    <figure class="hero-visual">
+      {
+        isFictional && (
+          <figcaption>
+            <strong>{lang(locale, "topic.fictionalCaption")}</strong>
+            <span>{lang(locale, "topic.fictionalSub").replace("{fixtureId}", String(topic.review?.fixtureId ?? ""))}</span>
+          </figcaption>
+        )
+      }
+      <img
+        src={topic.experience.image?.src}
+        alt={topic.experience.image?.alt}
+        width="1024"
+        height="1280"
+        loading="eager"
+        fetchpriority="high"
+      />
+      <small>
+        {lang(locale, "topic.assetStatus")}
+      </small>
+    </figure>
+  </header>
+
+  <section id="interaction" class="experience-wrap" aria-label="Interactive explanation">
+    <slot name="experience" />
+  </section>
+
+  <section class="working-answer" aria-labelledby="working-answer-title">
+    <div class="section-kicker">{lang(locale, "topic.workingAnswerKicker")}</div>
+    <h2 id="working-answer-title">{lang(locale, "topic.workingAnswerTitle")}</h2>
+    <blockquote>{topic.workingAnswer}</blockquote>
+    <div class="answer-meta">
+      <p><strong>{lang(locale, "topic.metaWhatChanged")}</strong><br />{topic.changeNote}</p>
+      <p><strong>{lang(locale, "topic.metaReleaseState")}</strong><br />{topic.releaseState} · public release blocked</p>
+    </div>
+  </section>
+
+  <section class="deeper" aria-labelledby="deeper-title">
+    <div class="section-kicker">{lang(locale, "topic.deeperKicker")}</div>
+    <h2 id="deeper-title">{topic.deeperTitle}</h2>
+    <ol class="explanation-list">
+      {
+        topic.explanation.map((item, index) => {
+          const [title, ...body] = item.split(" — ");
+          return (
+            <li>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{body.join(" — ")}</p>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+
+  <section class="boundary" aria-labelledby="boundary-title">
+    <div class="boundary-lead">
+      <div class="section-kicker">{lang(locale, "topic.boundaryKicker")}</div>
+      <h2 id="boundary-title">{topic.boundaryHeading}</h2>
+      <p>{topic.boundaryCopy}</p>
+    </div>
+    <ol>
+      {
+        topic.counterexamples.map((item, index) => (
+          <li>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <div>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  {
+    topic.review && (
+      <section class="blockers" aria-labelledby="blockers-title">
+        <div>
+          <div class="section-kicker">{lang(locale, "topic.blockersKicker")}</div>
+          <h2 id="blockers-title">{lang(locale, "topic.blockersTitle")}</h2>
+          <p>{lang(locale, "topic.blockersBody")}</p>
+        </div>
+        <details>
+          <summary>{lang(locale, "topic.openBlockers")}</summary>
+          <ol>
+            {topic.review.publicBlockers.map((blocker) => (
+              <li><strong>{blocker.id}</strong> — {blocker.label}</li>
+            ))}
+          </ol>
+        </details>
+      </section>
+    )
+  }
+
+  <SourceList topic={topic} locale={locale} />
+  <RelatedList topic={topic} locale={locale} />
+  <FeedbackForm topicSlug={topic.slug} locale={locale} />
+  <ShareControls topicSlug={topic.slug} title={topic.openingQuestion} shareText={shareText} locale={locale} />
+</article>
+
+<section class="translation-notice" role="note">
+  {topic.translationState === "DRAFT_TRANSLATION" && (
+    <p><strong>DRAFT TRANSLATION.</strong> Machine-generated; not yet human-reviewed. Content may need editing.</p>
+  )}
+</section>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("from") === "tiktok" && window.location.hash === "#interaction") {
+    document.documentElement.dataset.entry = "tiktok";
+  }
+</script>
+
+<style>
+  .topic {
+    --page-gutter: clamp(1rem, 5vw, 5rem);
+    --topic-accent: #ff5b42;
+    --topic-secondary: #b8ef16;
+    --topic-highlight: #fff;
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .topic-hero {
+    display: grid;
+    gap: 2rem;
+    min-height: calc(100svh - 7.5rem);
+    padding: clamp(2rem, 7vw, 6rem) var(--page-gutter);
+    background: var(--topic-bg);
+    color: var(--topic-hero-ink, #fff);
+  }
+
+  .hero-copy {
+    align-self: center;
+  }
+
+  .eyebrow,
+  .section-kicker {
+    margin: 0 0 1rem;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    max-width: 14ch;
+    margin: 0;
+    font-size: clamp(3.15rem, 12vw, 8.5rem);
+    line-height: 0.86;
+    letter-spacing: -0.05em;
+  }
+
+  .deck {
+    max-width: 39rem;
+    margin: 1.5rem 0;
+    font-size: clamp(1.05rem, 2.3vw, 1.4rem);
+    line-height: 1.45;
+  }
+
+  .hero-action {
+    display: inline-flex;
+    gap: 2rem;
+    align-items: center;
+    justify-content: space-between;
+    min-width: min(100%, 19rem);
+    padding: 1rem 1.1rem;
+    border: 3px solid currentColor;
+    background: var(--topic-highlight);
+    color: var(--ink);
+    font-weight: 950;
+    text-decoration: none;
+    text-transform: uppercase;
+    box-shadow: 5px 5px 0 currentColor;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 1.6rem;
+  }
+
+  .hero-meta span {
+    padding: 0.4rem 0.55rem;
+    border: 1.5px solid currentColor;
+    font-size: 0.68rem;
+    font-weight: 850;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .hero-visual {
+    align-self: center;
+    width: min(100%, 31rem);
+    margin: 0 auto;
+    border: 3px solid var(--ink);
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 9px 9px 0 var(--topic-accent);
+    transform: rotate(1deg);
+  }
+
+  .hero-visual figcaption {
+    display: grid;
+    gap: 0.18rem;
+    padding: 0.7rem 0.8rem;
+    border-bottom: var(--line);
+    background: var(--topic-highlight);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+  }
+
+  .hero-visual img {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+  }
+
+  .hero-visual small {
+    display: block;
+    padding: 0.55rem 0.7rem;
+    border-top: var(--line);
+    font-size: 0.65rem;
+    line-height: 1.35;
+  }
+
+  .experience-wrap {
+    scroll-margin-top: 1rem;
+  }
+
+  .working-answer,
+  .deeper,
+  .boundary,
+  .blockers {
+    padding: clamp(4rem, 9vw, 8rem) var(--page-gutter);
+  }
+
+  .working-answer {
+    background: var(--topic-secondary);
+  }
+
+  .working-answer h2,
+  .deeper h2,
+  .boundary h2,
+  .blockers h2 {
+    max-width: 13ch;
+    margin: 0;
+    font-size: clamp(2.5rem, 8vw, 6rem);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+  }
+
+  blockquote {
+    max-width: 60rem;
+    margin: 2.5rem 0;
+    font-family: Georgia, serif;
+    font-size: clamp(1.45rem, 4vw, 2.75rem);
+    line-height: 1.25;
+  }
+
+  .answer-meta {
+    display: grid;
+    gap: 1rem;
+    max-width: 60rem;
+    padding-top: 1.5rem;
+    border-top: var(--line);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .deeper {
+    background: #fff;
+  }
+
+  .explanation-list,
+  .boundary ol {
+    max-width: 70rem;
+    margin: 2.5rem 0 0;
+    padding: 0;
+    border-top: var(--line);
+    list-style: none;
+  }
+
+  .explanation-list li,
+  .boundary li {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 1rem;
+    padding: 1.3rem 0;
+    border-bottom: var(--line);
+  }
+
+  .explanation-list h3,
+  .boundary h3 {
+    margin: 0 0 0.4rem;
+    font-family: inherit;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+  }
+
+  .explanation-list p,
+  .boundary p,
+  .blockers p {
+    max-width: 44rem;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .boundary {
+    display: grid;
+    gap: 2.5rem;
+    border-block: var(--line);
+    background: var(--topic-accent);
+  }
+
+  .boundary-lead > p {
+    margin-top: 1.5rem;
+  }
+
+  .boundary ol {
+    margin-top: 0;
+  }
+
+  .blockers {
+    display: grid;
+    gap: 2rem;
+    background: var(--topic-highlight);
+  }
+
+  .blockers p {
+    margin-top: 1.5rem;
+  }
+
+  details {
+    align-self: start;
+    border: var(--line);
+    background: #fff;
+    box-shadow: var(--shadow);
+  }
+
+  summary {
+    padding: 1rem;
+    font-weight: 950;
+    cursor: pointer;
+  }
+
+  details ol {
+    margin: 0;
+    padding: 0 1rem 1rem 2.5rem;
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .translation-notice {
+    padding: 1.5rem var(--page-gutter);
+    border-top: var(--line);
+    background: var(--yellow);
+    color: var(--ink);
+    font-size: 0.85rem;
+  }
+
+  @media (min-width: 52rem) {
+    .topic-hero {
+      grid-template-columns: minmax(0, 1.08fr) minmax(21rem, 0.62fr);
+      align-items: center;
+    }
+
+    .answer-meta {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .boundary,
+    .blockers {
+      grid-template-columns: minmax(18rem, 0.75fr) minmax(30rem, 1fr);
+    }
+  }
+
+  @media (max-width: 32rem) {
+    .topic-hero {
+      min-height: 0;
+    }
+
+    .hero-visual {
+      width: min(86vw, 25rem);
+      transform: rotate(0.5deg);
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .topic-hero {
+      grid-template-columns: minmax(0, 1.08fr) minmax(20rem, 0.64fr);
+      gap: clamp(2.5rem, 5vw, 6rem);
+      min-height: calc(100vh - 7.4rem);
+      padding-block: clamp(2.25rem, 4.5vh, 4rem);
+    }
+
+    .hero-copy h1 {
+      max-width: 11ch;
+      font-size: clamp(4.75rem, min(6.8vw, 10.2vh), 7.1rem);
+      line-height: 0.83;
+    }
+
+    .hero-copy .deck {
+      max-width: 35rem;
+      margin-block: clamp(1rem, 2vh, 1.4rem);
+      font-size: clamp(1rem, 1.15vw, 1.22rem);
+    }
+
+    .hero-visual {
+      width: min(34vw, 31rem);
+      max-height: calc(100vh - 12rem);
+    }
+
+    .hero-visual img {
+      max-height: calc(100vh - 16rem);
+    }
+
+    .working-answer,
+    .deeper,
+    .boundary,
+    .blockers {
+      max-width: 100rem;
+      margin-inline: auto;
+    }
+  }
+</style>

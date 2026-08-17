@@ -1,0 +1,34 @@
+---
+import TopicShell from "./TopicShell.astro";
+import { experienceRegistry } from "./experiences/registry.ts";
+import SiteLayout from "../layouts/SiteLayout.astro";
+import type { SiteTopic } from "../data/topics.ts";
+import type { Locale } from "../lib/i18n.ts";
+import type { ReleasePlan } from "../lib/release-guard.ts";
+
+interface Props {
+  topic: SiteTopic;
+  releasePage: ReleasePlan["pages"][number];
+  locale: Locale;
+}
+
+const { topic, releasePage, locale } = Astro.props;
+const Experience = experienceRegistry[topic.experience.implementationId as keyof typeof experienceRegistry];
+if (!Experience) {
+  throw new Error(`No experience component registered for ${topic.experience.implementationId}`);
+}
+---
+
+<SiteLayout
+  title={topic.openingQuestion}
+  description={topic.judgment.webPayoff}
+  robots={releasePage.robots}
+  showLocalReviewIndicator={releasePage.showLocalReviewIndicator}
+  ownerReviewKey={topic.ownerReviewKey}
+  bodyClass={`topic-page topic-page--${topic.slug}`}
+  locale={locale}
+>
+  <TopicShell topic={topic} locale={locale}>
+    <Experience slot="experience" topic={topic} locale={locale} />
+  </TopicShell>
+</SiteLayout>

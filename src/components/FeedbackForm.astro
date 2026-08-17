@@ -1,0 +1,251 @@
+---
+import type { Locale } from "../lib/i18n.ts";
+import { t } from "../data/ui-strings.ts";
+
+interface Props {
+  topicSlug: string;
+  locale: Locale;
+}
+
+const { topicSlug, locale } = Astro.props;
+---
+
+<section class="feedback" aria-labelledby={`feedback-title-${topicSlug}`}>
+  <div class="section-kicker">{t(locale, "feedback.kicker")}</div>
+  <h2 id={`feedback-title-${topicSlug}`}>
+    {t(locale, "feedback.title")}
+  </h2>
+  <form data-feedback-form data-topic-slug={topicSlug} data-locale={locale} novalidate>
+    <fieldset data-feedback-fields disabled>
+      <label for={`feedback-${topicSlug}`}>{t(locale, "feedback.label")}</label>
+      <textarea
+        id={`feedback-${topicSlug}`}
+        name="question"
+        maxlength="500"
+        rows="5"
+        required
+        aria-describedby={`feedback-help-${topicSlug} feedback-count-${topicSlug}`}
+      ></textarea>
+      <div class="honeypot" aria-hidden="true">
+        <label for={`website-${topicSlug}`}>{t(locale, "feedback.honeypot")}</label>
+        <input id={`website-${topicSlug}`} name="website" tabindex="-1" autocomplete="off" />
+      </div>
+      <div class="feedback-meta">
+        <p id={`feedback-help-${topicSlug}`}>
+          {t(locale, "feedback.help")}
+        </p>
+        <output id={`feedback-count-${topicSlug}`} data-character-count>0 / 500</output>
+      </div>
+      <div class="feedback-actions">
+        <button type="button" data-check-question>{t(locale, "feedback.check")}</button>
+        <button type="button" class="copy-question" data-copy-question disabled>
+          {t(locale, "feedback.copy")}
+        </button>
+      </div>
+      <p class="feedback-status" role="status" aria-live="polite" data-feedback-status>
+        {t(locale, "feedback.statusInitial")}
+      </p>
+    </fieldset>
+    <noscript>
+      {t(locale, "feedback.noscript")}
+    </noscript>
+  </form>
+</section>
+
+<script>
+  import {
+    createUiEventDetail,
+    resolveEntryCategory,
+    WORKING_ANSWER_EVENT,
+  } from "../lib/ui-events.ts";
+  import { t } from "../data/ui-strings.ts";
+
+  document.querySelectorAll<HTMLFormElement>("[data-feedback-form]").forEach((form) => {
+    const locale = form.dataset.locale === "zh" ? "zh" : "en";
+    const startedAt = performance.now();
+    const textarea = form.querySelector<HTMLTextAreaElement>("textarea[name='question']");
+    const honeypot = form.querySelector<HTMLInputElement>("input[name='website']");
+    const count = form.querySelector<HTMLOutputElement>("[data-character-count]");
+    const status = form.querySelector<HTMLElement>("[data-feedback-status]");
+    const copyButton = form.querySelector<HTMLButtonElement>("[data-copy-question]");
+    const checkButton = form.querySelector<HTMLButtonElement>("[data-check-question]");
+    const fields = form.querySelector<HTMLFieldSetElement>("[data-feedback-fields]");
+    let checkedOnce = false;
+
+    if (!textarea || !honeypot || !count || !status || !copyButton || !checkButton || !fields) return;
+    fields.disabled = false;
+
+    textarea.addEventListener("input", () => {
+      count.textContent = `${textarea.value.length} / 500`;
+      copyButton.disabled = textarea.value.trim().length === 0;
+    });
+
+    checkButton.addEventListener("click", () => {
+      const question = textarea.value.trim();
+      if (honeypot.value || performance.now() - startedAt < 1200) {
+        status.textContent = t(locale, "feedback.takeMoment");
+        return;
+      }
+      if (!question) {
+        status.textContent = t(locale, "feedback.writeFirst");
+        textarea.focus();
+        return;
+      }
+      if (question.length > 500) {
+        status.textContent = t(locale, "feedback.tooLong");
+        return;
+      }
+      if (checkedOnce) {
+        status.textContent = t(locale, "feedback.alreadyChecked");
+        return;
+      }
+      checkedOnce = true;
+      const topicSlug = form.dataset.topicSlug;
+      const detail = topicSlug
+        ? createUiEventDetail(topicSlug, "question_submitted", {
+            entry: resolveEntryCategory(window.location.href),
+            question,
+          })
+        : null;
+      if (detail) {
+        window.dispatchEvent(
+          new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+        );
+      }
+      status.textContent = t(locale, "feedback.analyticsOff");
+    });
+
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(textarea.value.trim());
+        status.textContent = t(locale, "feedback.copied");
+      } catch {
+        textarea.select();
+        status.textContent = t(locale, "feedback.selectCopy");
+      }
+    });
+  });
+</script>
+
+<style>
+  .feedback {
+    padding: clamp(4rem, 9vw, 8rem) var(--page-gutter);
+    border-top: var(--line);
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .section-kicker {
+    margin-bottom: 1rem;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+  }
+
+  h2 {
+    max-width: 17ch;
+    margin: 0 0 2.5rem;
+    font-size: clamp(2.1rem, 6.5vw, 5rem);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+  }
+
+  form {
+    max-width: 58rem;
+  }
+
+  fieldset {
+    min-width: 0;
+    margin: 0;
+    border: 0;
+    padding: 0;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 10rem;
+    resize: vertical;
+    border: 3px solid #fff;
+    border-radius: 0;
+    padding: 1rem;
+    background: #fff;
+    color: var(--ink);
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+
+  .honeypot {
+    position: absolute;
+    left: -9999px;
+  }
+
+  .feedback-meta {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin: 0.7rem 0 1.2rem;
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+
+  .feedback-meta p {
+    max-width: 44rem;
+    margin: 0;
+  }
+
+  output {
+    flex: none;
+  }
+
+  .feedback-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  button {
+    min-height: 3.2rem;
+    border: 2px solid #fff;
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+    background: var(--topic-highlight);
+    color: var(--ink);
+    font-weight: 950;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .copy-question {
+    background: transparent;
+    color: #fff;
+  }
+
+  .feedback-status {
+    min-height: 1.5rem;
+    margin: 1rem 0 0;
+    font-size: 0.85rem;
+  }
+
+  noscript {
+    display: block;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border: 2px solid #fff;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+</style>

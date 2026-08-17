@@ -1,0 +1,18 @@
+---
+import { isPublicRelease } from "../../../data/release.ts";
+import ExploreView from "../../../components/ExploreView.astro";
+import { t } from "../../../data/ui-strings.ts";
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout
+  title={t("zh", "explore.title")}
+  description="一个可检索的编辑索引：Working Answer 与研究线索。"
+  robots={isPublicRelease ? "index,follow" : "noindex,nofollow"}
+  showLocalReviewIndicator={!isPublicRelease}
+  ownerReviewKey="explore"
+  bodyClass="explore-page"
+  locale="zh"
+>
+  <ExploreView locale="zh" />
+</SiteLayout>

@@ -1,0 +1,29 @@
+---
+import QuestionSpaceHome from "../../components/home/QuestionSpaceHome.astro";
+import { isPublicRelease, getReleasePlan } from "../../data/release.ts";
+import { homeCoverTopicId } from "../../data/site.ts";
+import { getTopicById } from "../../data/topics.ts";
+import { t } from "../../data/ui-strings.ts";
+import SiteLayout from "../../layouts/SiteLayout.astro";
+
+const coverTopic = getTopicById(homeCoverTopicId, "zh");
+const description = "我们拆解稀缺资源的隐秘分配，解码系统真正的运转逻辑——以及告诉你这和你的钱袋子有什么关系。";
+// In a public build the zh Topic pages are still draft translations and are
+// not built; the cover button must not link to a missing page.
+const releasedSlugs = getReleasePlan("zh").pages.map((page) => page.slug);
+const coverHref = coverTopic && releasedSlugs.includes(coverTopic.slug)
+  ? undefined
+  : "/zh/explore/";
+---
+
+<SiteLayout
+  title={`${t("zh", "home.titleLine1")} ${t("zh", "home.titleLine2")}`}
+  description={description}
+  robots={isPublicRelease ? "index,follow" : "noindex,nofollow"}
+  showLocalReviewIndicator={!isPublicRelease}
+  ownerReviewKey="home"
+  bodyClass="home-page"
+  locale="zh"
+>
+  <QuestionSpaceHome coverTopic={coverTopic} coverHref={coverHref} locale="zh" />
+</SiteLayout>

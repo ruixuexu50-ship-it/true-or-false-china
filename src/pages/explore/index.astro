@@ -1,0 +1,18 @@
+---
+import { isPublicRelease } from "../../data/release.ts";
+import ExploreView from "../../components/ExploreView.astro";
+import { t } from "../../data/ui-strings.ts";
+import SiteLayout from "../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout
+  title={t("en", "explore.title")}
+  description="A searchable editorial index of True or False China topics and open research trails."
+  robots={isPublicRelease ? "index,follow" : "noindex,nofollow"}
+  showLocalReviewIndicator={!isPublicRelease}
+  ownerReviewKey="explore"
+  bodyClass="explore-page"
+  locale="en"
+>
+  <ExploreView locale="en" />
+</SiteLayout>

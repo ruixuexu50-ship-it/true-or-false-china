@@ -1,0 +1,27 @@
+---
+import TopicPageView from "../../../components/TopicPageView.astro";
+import { zhReleasePlan } from "../../../data/release.ts";
+import { getTopic } from "../../../data/topics.ts";
+import type { SiteTopic } from "../../../data/topics.ts";
+
+export function getStaticPaths() {
+  return zhReleasePlan.pages.map((page) => {
+    const topic = getTopic(page.slug, "zh");
+    if (!topic) throw new Error(`Zh release plan references missing Topic: ${page.slug}`);
+    return {
+      params: { slug: page.slug },
+      props: { topic, releasePage: page, locale: "zh" as const },
+    };
+  });
+}
+
+interface Props {
+  topic: SiteTopic;
+  releasePage: (typeof zhReleasePlan.pages)[number];
+  locale: "zh";
+}
+
+const { topic, releasePage, locale } = Astro.props;
+---
+
+<TopicPageView topic={topic} releasePage={releasePage} locale={locale} />

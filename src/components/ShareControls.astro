@@ -1,0 +1,155 @@
+---
+import type { Locale } from "../lib/i18n.ts";
+import { t } from "../data/ui-strings.ts";
+
+interface Props {
+  topicSlug: string;
+  title: string;
+  shareText: string;
+  locale: Locale;
+}
+
+const { topicSlug, title, shareText, locale } = Astro.props;
+---
+
+<section class="share" aria-labelledby={`share-title-${topicSlug}`} data-share-controls>
+  <div>
+    <div class="section-kicker">{t(locale, "share.kicker")}</div>
+    <h2 id={`share-title-${topicSlug}`}>{t(locale, "share.title")}</h2>
+    <p>{t(locale, "share.intro")}</p>
+  </div>
+  <div
+    class="share-actions"
+    data-share-root
+    data-topic-slug={topicSlug}
+    data-share-title={title}
+    data-share-text={shareText}
+    data-locale={locale}
+  >
+    <button type="button" data-native-share>{t(locale, "share.buttonShare")}</button>
+    <button type="button" data-copy-link>{t(locale, "share.buttonCopy")}</button>
+    <p role="status" aria-live="polite" data-share-status>{t(locale, "share.statusInitial")}</p>
+  </div>
+</section>
+
+<script>
+  import {
+    createUiEventDetail,
+    WORKING_ANSWER_EVENT,
+  } from "../lib/ui-events.ts";
+  import { t } from "../data/ui-strings.ts";
+
+  document.querySelectorAll<HTMLElement>("[data-share-root]").forEach((root) => {
+    const locale = root.dataset.locale === "zh" ? "zh" : "en";
+    const shareButton = root.querySelector<HTMLButtonElement>("[data-native-share]");
+    const copyButton = root.querySelector<HTMLButtonElement>("[data-copy-link]");
+    const status = root.querySelector<HTMLElement>("[data-share-status]");
+    if (!shareButton || !copyButton || !status) return;
+
+    const emit = (action: "share" | "copy") => {
+      const topicSlug = root.dataset.topicSlug;
+      if (!topicSlug) return;
+      const detail = createUiEventDetail(topicSlug, "share_or_copy", { action });
+      if (detail) {
+        window.dispatchEvent(
+          new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+        );
+      }
+    };
+
+    shareButton.addEventListener("click", async () => {
+      if (!navigator.share) {
+        status.textContent = t(locale, "share.nativeUnavailable");
+        copyButton.focus();
+        return;
+      }
+      try {
+        await navigator.share({
+          title: root.dataset.shareTitle,
+          text: root.dataset.shareText,
+          url: window.location.href,
+        });
+        status.textContent = t(locale, "share.shareOpened");
+        emit("share");
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        status.textContent = t(locale, "share.shareFailed");
+      }
+    });
+
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        status.textContent = t(locale, "share.copied");
+        emit("copy");
+      } catch {
+        status.textContent = t(locale, "share.copyAddress");
+      }
+    });
+  });
+</script>
+
+<style>
+  .share {
+    display: grid;
+    gap: 2rem;
+    padding: clamp(3rem, 7vw, 5rem) var(--page-gutter);
+    border-top: var(--line);
+    background: var(--topic-accent);
+    color: var(--ink);
+  }
+
+  .section-kicker {
+    margin-bottom: 0.8rem;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+  }
+
+  h2 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    line-height: 0.94;
+  }
+
+  p {
+    max-width: 36rem;
+    line-height: 1.5;
+  }
+
+  .share-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-content: center;
+  }
+
+  button {
+    min-width: 8rem;
+    min-height: 3.2rem;
+    border: var(--line);
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    color: var(--ink);
+    font-weight: 950;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0 var(--ink);
+    cursor: pointer;
+  }
+
+  .share-actions p {
+    flex-basis: 100%;
+    min-height: 1.5rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+  }
+
+  @media (min-width: 48rem) {
+    .share {
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+    }
+  }
+</style>

@@ -1,0 +1,143 @@
+---
+import type { SiteTopic } from "../data/topics.ts";
+import type { Locale } from "../lib/i18n.ts";
+import { t } from "../data/ui-strings.ts";
+
+interface Props {
+  topic: SiteTopic;
+  locale: Locale;
+}
+
+const { topic, locale } = Astro.props;
+---
+
+<section
+  class="related"
+  aria-labelledby="related-title"
+  data-related-list
+  data-topic-slug={topic.slug}
+>
+  <div>
+    <div class="section-kicker">{t(locale, "related.kicker")}</div>
+    <h2 id="related-title">{t(locale, "related.title")}</h2>
+    <p>{topic.relatedIntro}</p>
+  </div>
+  <ol>
+    {
+      topic.relatedRabbitHoles.map((item, index) => (
+        <li>
+          <a href={item.href} data-related-id={item.id}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <strong>{item.label}</strong>
+            <small>{item.note}</small>
+            <span aria-hidden="true">→</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<script>
+  import {
+    createUiEventDetail,
+    WORKING_ANSWER_EVENT,
+  } from "../lib/ui-events.ts";
+
+  document.querySelectorAll<HTMLElement>("[data-related-list]").forEach((section) => {
+    const topicSlug = section.dataset.topicSlug;
+    if (!topicSlug) return;
+    section.querySelectorAll<HTMLAnchorElement>("[data-related-id]").forEach((link) => {
+      link.addEventListener("click", () => {
+        const detail = createUiEventDetail(topicSlug, "related_open", {
+          relatedId: link.dataset.relatedId,
+        });
+        if (detail) {
+          window.dispatchEvent(
+            new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+          );
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .related {
+    display: grid;
+    gap: 2.5rem;
+    padding: clamp(4rem, 9vw, 8rem) var(--page-gutter);
+    border-top: var(--line);
+    background: var(--topic-highlight);
+    color: var(--ink);
+  }
+
+  .section-kicker {
+    margin-bottom: 1rem;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+  }
+
+  h2 {
+    max-width: 11ch;
+    margin: 0;
+    font-size: clamp(2.5rem, 8vw, 6rem);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+  }
+
+  p {
+    max-width: 28rem;
+    line-height: 1.5;
+  }
+
+  ol {
+    margin: 0;
+    padding: 0;
+    border-top: var(--line);
+    list-style: none;
+  }
+
+  li {
+    border-bottom: var(--line);
+  }
+
+  a {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr auto;
+    gap: 0.8rem;
+    align-items: start;
+    padding: 1.2rem 0;
+    text-decoration: none;
+  }
+
+  a:hover strong {
+    text-decoration: underline;
+  }
+
+  strong {
+    font-size: clamp(1.1rem, 3vw, 1.55rem);
+    line-height: 1.1;
+  }
+
+  small {
+    display: none;
+    max-width: 14rem;
+    line-height: 1.4;
+  }
+
+  @media (min-width: 58rem) {
+    .related {
+      grid-template-columns: minmax(17rem, 0.65fr) minmax(30rem, 1fr);
+    }
+
+    a {
+      grid-template-columns: 2.5rem minmax(18rem, 1fr) minmax(10rem, 0.6fr) auto;
+    }
+
+    small {
+      display: block;
+    }
+  }
+</style>

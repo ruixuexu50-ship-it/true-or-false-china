@@ -1,0 +1,45 @@
+---
+import type { TopicPage } from "../lib/contracts.ts";
+
+interface Props {
+  topic: TopicPage;
+}
+
+const { topic } = Astro.props;
+---
+
+{
+  topic.experience.image?.src && (
+    <figure>
+      <img
+        src={topic.experience.image.src}
+        alt={topic.experience.image.alt}
+        loading="lazy"
+      />
+    </figure>
+  )
+}
+
+{
+  topic.transcript?.length ? (
+    <section aria-labelledby="transcript-title">
+      <h2 id="transcript-title">Transcript</h2>
+      {topic.transcript.map((line) => (
+        <p>
+          <strong>{line.speaker}:</strong> {line.text}
+        </p>
+      ))}
+    </section>
+  ) : null
+}
+
+{
+  topic.experience.music?.src && (
+    <section aria-labelledby="music-title">
+      <h2 id="music-title">Soundtrack</h2>
+      <audio controls preload="none" src={topic.experience.music.src}>
+        <a href={topic.experience.music.src}>Play {topic.experience.music.title}</a>
+      </audio>
+    </section>
+  )
+}

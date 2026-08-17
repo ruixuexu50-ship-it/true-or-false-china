@@ -1,0 +1,112 @@
+---
+import { ownerReviews, type OwnerReviewKey } from "../data/owner-review.ts";
+
+interface Props {
+  reviewKey: OwnerReviewKey;
+}
+
+const { reviewKey } = Astro.props;
+const review = ownerReviews[reviewKey];
+---
+
+<details class="owner-review" lang="zh-CN">
+  <summary>
+    <span>中文审阅</span>
+    <strong>{review.titleZh}</strong>
+    <small>仅本地可见 · 不是访客文案</small>
+  </summary>
+  <div class="owner-review__body">
+    <section>
+      <h2>这页到底在说什么</h2>
+      <p>{review.literalZh}</p>
+    </section>
+    <section>
+      <h2>它想让读者做什么</h2>
+      <p>{review.intentZh}</p>
+    </section>
+    <section>
+      <h2>以后从哪里改</h2>
+      <p>{review.changeHintZh}</p>
+    </section>
+  </div>
+</details>
+
+<style>
+  .owner-review {
+    position: relative;
+    z-index: 20;
+    border-bottom: 2px solid #111216;
+    background: #ffd91f;
+    color: #111216;
+  }
+
+  summary {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.7rem 1rem;
+    align-items: center;
+    padding: 0.75rem clamp(1rem, 4vw, 3.5rem);
+    cursor: pointer;
+    list-style-position: inside;
+  }
+
+  summary span,
+  summary small {
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  summary strong {
+    font-size: 0.9rem;
+  }
+
+  summary small {
+    text-align: right;
+  }
+
+  .owner-review__body {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem clamp(1rem, 4vw, 3.5rem) 1.5rem;
+    border-top: 2px solid #111216;
+    background: #fff;
+  }
+
+  section {
+    padding-left: 0.85rem;
+    border-left: 5px solid #093dcc;
+  }
+
+  h2 {
+    margin: 0 0 0.35rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: none;
+  }
+
+  p {
+    max-width: 44rem;
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+
+  @media (min-width: 56rem) {
+    .owner-review__body {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 40rem) {
+    summary {
+      grid-template-columns: 1fr;
+    }
+
+    summary small {
+      text-align: left;
+    }
+  }
+</style>

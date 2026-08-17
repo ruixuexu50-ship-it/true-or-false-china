@@ -1,0 +1,28 @@
+---
+import QuestionSpaceHome from "../components/home/QuestionSpaceHome.astro";
+import { isPublicRelease, getReleasePlan } from "../data/release.ts";
+import { homeCoverTopicId, siteDescription } from "../data/site.ts";
+import { getTopicById } from "../data/topics.ts";
+import SiteLayout from "../layouts/SiteLayout.astro";
+
+// The cover Topic comes from explicit editorial config, keyed by stable
+// topicId — never from array position in the topics list.
+const coverTopic = getTopicById(homeCoverTopicId, "en");
+// Never link to a Topic page the current build mode did not emit.
+const releasedSlugs = getReleasePlan("en").pages.map((page) => page.slug);
+const coverHref = coverTopic && releasedSlugs.includes(coverTopic.slug)
+  ? undefined
+  : "/explore/";
+---
+
+<SiteLayout
+  title="True or False China: Myths and reality."
+  description={siteDescription}
+  robots={isPublicRelease ? "index,follow" : "noindex,nofollow"}
+  showLocalReviewIndicator={!isPublicRelease}
+  ownerReviewKey="home"
+  bodyClass="home-page"
+  locale="en"
+>
+  <QuestionSpaceHome coverTopic={coverTopic} coverHref={coverHref} locale="en" />
+</SiteLayout>

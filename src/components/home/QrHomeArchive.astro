@@ -1,0 +1,385 @@
+---
+import type { SiteTopic } from "../../data/topics.ts";
+
+interface Props {
+  // Explicit dependencies of this archived experiment, resolved by the
+  // route from qrHomeArchiveExperiment (stable topicIds, never position).
+  featured: SiteTopic;
+  second: SiteTopic;
+}
+
+const { featured, second } = Astro.props;
+---
+
+<section class="home-feature">
+  <div class="home-copy">
+    <p class="eyebrow">UNFINISHED QUESTION / 001</p>
+    <h1>{featured.openingQuestion}</h1>
+    <p class="deck">{featured.deck}</p>
+    <div class="home-actions">
+      <a class="primary-action" href={`/topics/${featured.slug}/?from=direct#interaction`}>
+        <span>Continue the question</span><span aria-hidden="true">↘</span>
+      </a>
+      <span>{featured.effort} · no financial details</span>
+    </div>
+    <div class="status-line">
+      <span>Working Answer</span>
+      <span>{featured.sources.length} sources</span>
+      <span>Revised {featured.lastReviewed}</span>
+    </div>
+    <details class="tiktok-handoff" data-tiktok-handoff>
+      <summary>TikTok handoff preview</summary>
+      <p>
+        Use this separately at the end of a video so the click resumes at the
+        unfinished interaction and is labeled as a TikTok entry.
+      </p>
+      <a href={`/topics/${featured.slug}/?from=tiktok#interaction`}>
+        Open the TikTok handoff path →
+      </a>
+    </details>
+  </div>
+  <figure>
+    <img
+      src={featured.experience.image?.src}
+      alt={featured.experience.image?.alt}
+      width="1024"
+      height="1280"
+      fetchpriority="high"
+    />
+    <figcaption>
+      One traveler-card. One route. Three gates. Working image, local-review only.
+    </figcaption>
+  </figure>
+</section>
+
+<section class="method-strip" aria-label="How the site works">
+  <p>
+    One unfinished question → one action → a Working Answer → boundaries and
+    sources → the next question.
+  </p>
+  <a href="/explore/">See the whole index →</a>
+</section>
+
+<section class="second-door" aria-labelledby="second-topic-title">
+  <div class="door-number">002</div>
+  <div>
+    <p>ANOTHER KIND OF PROBLEM / FICTIONAL INFERENCE TEST</p>
+    <h2 id="second-topic-title">{second.openingQuestion}</h2>
+    <p>{second.deck}</p>
+    <a href={`/topics/${second.slug}/`}>
+      Test one inference <span aria-hidden="true">→</span>
+    </a>
+  </div>
+  <div class="door-mark" aria-hidden="true">
+    <span></span><span></span>
+  </div>
+</section>
+
+<style>
+  .home-feature {
+    display: grid;
+    gap: 2rem;
+    min-height: calc(100svh - 7.5rem);
+    padding: clamp(2.5rem, 7vw, 6rem) clamp(1rem, 5vw, 5rem);
+    background: #063bc9;
+    color: #fff;
+  }
+
+  .home-copy {
+    align-self: center;
+  }
+
+  .eyebrow {
+    margin: 0 0 1rem;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+  }
+
+  h1 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(3.4rem, 13vw, 9rem);
+    line-height: 0.84;
+    letter-spacing: -0.055em;
+  }
+
+  .deck {
+    max-width: 40rem;
+    margin: 1.5rem 0;
+    font-size: clamp(1.05rem, 2.3vw, 1.4rem);
+    line-height: 1.48;
+  }
+
+  .home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .primary-action {
+    display: inline-flex;
+    gap: 2rem;
+    justify-content: space-between;
+    min-width: min(100%, 20rem);
+    padding: 1rem;
+    border: 3px solid #111216;
+    background: #b8ef16;
+    box-shadow: 6px 6px 0 #111216;
+    color: #111216;
+    font-weight: 950;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .home-actions > span {
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .status-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 1.5rem;
+  }
+
+  .status-line span {
+    padding: 0.4rem 0.55rem;
+    border: 1.5px solid #fff;
+    font-size: 0.68rem;
+    font-weight: 850;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .tiktok-handoff {
+    max-width: 34rem;
+    margin-top: 1rem;
+    padding: 0.65rem 0.75rem;
+    border: 1.5px solid #fff;
+    font-size: 0.72rem;
+    line-height: 1.45;
+  }
+
+  .tiktok-handoff summary {
+    font-weight: 950;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
+  .tiktok-handoff p {
+    margin: 0.75rem 0;
+  }
+
+  .tiktok-handoff a {
+    font-weight: 900;
+  }
+
+  figure {
+    align-self: center;
+    width: min(88vw, 31rem);
+    margin: 0 auto;
+    border: 3px solid #111216;
+    background: #fff;
+    box-shadow: 10px 10px 0 #ff5b42;
+    transform: rotate(1.25deg);
+  }
+
+  figure img {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+  }
+
+  figcaption {
+    padding: 0.6rem 0.75rem;
+    border-top: 2px solid #111216;
+    color: #111216;
+    font-size: 0.68rem;
+    line-height: 1.4;
+  }
+
+  .method-strip {
+    display: grid;
+    gap: 1rem;
+    padding: 1.5rem clamp(1rem, 5vw, 5rem);
+    border-block: 2px solid #111216;
+    background: #fff;
+  }
+
+  .method-strip p {
+    max-width: 52rem;
+    margin: 0;
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    font-weight: 850;
+    line-height: 1.4;
+  }
+
+  .method-strip a {
+    align-self: center;
+    font-size: 0.78rem;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .second-door {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    overflow: hidden;
+    padding: clamp(4rem, 10vw, 9rem) clamp(1rem, 5vw, 5rem);
+    background: #ff2f92;
+    color: #111216;
+  }
+
+  .door-number {
+    font-family: Impact, "Arial Narrow Bold", sans-serif;
+    font-size: clamp(1.2rem, 4vw, 2.5rem);
+  }
+
+  .second-door p:first-child {
+    margin-top: 0;
+    font-size: 0.72rem;
+    font-weight: 950;
+    letter-spacing: 0.1em;
+  }
+
+  .second-door h2 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(3rem, 10vw, 7.5rem);
+    line-height: 0.87;
+    letter-spacing: -0.045em;
+  }
+
+  .second-door p:not(:first-child) {
+    max-width: 38rem;
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  .second-door a {
+    display: inline-flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border: 3px solid #111216;
+    background: #ffd91f;
+    box-shadow: 5px 5px 0 #111216;
+    font-weight: 950;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .door-mark {
+    position: absolute;
+    right: 4vw;
+    bottom: -8vw;
+    display: none;
+    width: min(34vw, 30rem);
+    aspect-ratio: 1;
+  }
+
+  .door-mark span {
+    position: absolute;
+    inset: 0 25% 0 0;
+    border: 5px solid #111216;
+    border-radius: 50%;
+    background: #145cff;
+    mix-blend-mode: multiply;
+  }
+
+  .door-mark span:last-child {
+    inset: 0 0 0 25%;
+    background: #ffd91f;
+  }
+
+  @media (min-width: 52rem) {
+    .home-feature {
+      grid-template-columns: minmax(0, 1.1fr) minmax(21rem, 0.62fr);
+      align-items: center;
+    }
+
+    .method-strip {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+
+    .second-door {
+      grid-template-columns: 5rem minmax(30rem, 1fr) minmax(18rem, 0.6fr);
+    }
+
+    .door-mark {
+      display: block;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .home-feature {
+      position: relative;
+      grid-template-columns: minmax(0, 1.12fr) minmax(20rem, 0.68fr);
+      gap: clamp(2.5rem, 5vw, 6rem);
+      min-height: calc(100vh - 7.4rem);
+      padding-block: clamp(2rem, 4.2vh, 3.75rem);
+    }
+
+    .home-copy {
+      z-index: 1;
+      align-self: center;
+      max-height: calc(100vh - 12rem);
+    }
+
+    .home-copy h1 {
+      max-width: 10.5ch;
+      font-size: clamp(5rem, min(7.35vw, 10.8vh), 7.35rem);
+      line-height: 0.82;
+    }
+
+    .home-copy .deck {
+      max-width: 35rem;
+      margin-block: clamp(1rem, 2vh, 1.4rem);
+      font-size: clamp(1rem, 1.18vw, 1.22rem);
+    }
+
+    .home-copy .status-line {
+      margin-top: 1rem;
+    }
+
+    .home-copy .tiktok-handoff {
+      margin-top: 0.75rem;
+    }
+
+    .home-feature figure {
+      position: relative;
+      z-index: 1;
+      width: min(34vw, 31rem);
+      max-height: calc(100vh - 12rem);
+    }
+
+    .home-feature figure::before {
+      position: absolute;
+      z-index: -1;
+      inset: -1.4rem 2.2rem 1.5rem -2.2rem;
+      border: 3px solid #111216;
+      background: #b8ef16;
+      content: "";
+      transform: rotate(-3deg);
+    }
+
+    .home-feature figure img {
+      max-height: calc(100vh - 15rem);
+    }
+
+    .second-door {
+      min-height: 78vh;
+      align-items: center;
+      padding-block: clamp(5rem, 9vh, 8rem);
+    }
+  }
+</style>

@@ -1,0 +1,38 @@
+/* ─────────────────────────────────────────────────────────────
+   Global design tokens — the single entry point for brand-level
+   visual changes (color, type families, border, shadow).
+
+   "整体品牌颜色/字体/边框/阴影换一下" = edit THIS file only.
+   The current values are the present brand (CURRENT ASSUMPTION,
+   not INVARIANT). Component-local CSS stays inside each component.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  /* Color */
+  --ink: #111216;
+  --white: #fff;
+  --cobalt: #093dcc;
+  --coral: #ff5b42;
+  --acid: #b8ef16;
+  --pink: #ff2f92;
+  --yellow: #ffd91f;
+
+  /* Typography families.
+     Latin faces come first; Chinese text falls through to PingFang SC /
+     Hiragino / YaHei / Noto Sans SC, so the bilingual site stays adapted
+     in both languages without any per-component font rules. */
+  --font-body:
+    Arial Narrow, Roboto Condensed, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-display:
+    Impact, Haettenschweiler, "Arial Narrow Bold", Arial Narrow,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
+    sans-serif;
+
+  /* Border + shadow (the site's shared "ink outline" language) */
+  --line: 2px solid var(--ink);
+  --shadow: 6px 6px 0 var(--ink);
+}

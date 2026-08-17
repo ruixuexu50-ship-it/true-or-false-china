@@ -1,0 +1,343 @@
+---
+import { isPublicRelease, getReleasePlan } from "../data/release.ts";
+import { getTopic } from "../data/topics.ts";
+import { t, format } from "../data/ui-strings.ts";
+import type { Locale } from "../lib/i18n.ts";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const releasePlan = getReleasePlan(locale);
+const visibleTopics = releasePlan.pages
+  .map((page) => getTopic(page.slug, locale))
+  .filter((topic): topic is NonNullable<typeof topic> => topic !== undefined);
+
+const hrefPrefix = locale === "zh" ? "/zh" : "";
+const slugify = (value: string) => value.toLowerCase().replaceAll(" ", "-");
+const categories = [...new Set(visibleTopics.map((topic) => topic.category))].sort();
+
+const trails = visibleTopics.flatMap((topic) =>
+  topic.relatedRabbitHoles.map((trail) => ({ ...trail, parent: topic.openingQuestion })),
+);
+---
+
+<div class="explore-view" data-explore data-locale={locale}>
+  <header class="explore-header">
+    <p>{format(t(locale, "explore.eyebrow"), { n: visibleTopics.length, m: trails.length })}</p>
+    <h1>{t(locale, "explore.title")}</h1>
+    <p>{t(locale, "explore.intro")}</p>
+  </header>
+
+  <section class="index-controls" aria-label="Filter the Topic index">
+    <label>
+      <span>{t(locale, "explore.searchLabel")}</span>
+      <input type="search" placeholder={t(locale, "explore.searchPlaceholder")} data-topic-search />
+    </label>
+    <label>
+      <span>{t(locale, "explore.categoryLabel")}</span>
+      <select data-category-filter>
+        <option value="all">{t(locale, "explore.categoryAll")}</option>
+        {
+          categories.map((category) => (
+            <option value={slugify(category)}>{category}</option>
+          ))
+        }
+      </select>
+    </label>
+    <label>
+      <span>{t(locale, "explore.statusLabel")}</span>
+      <select data-status-filter>
+        <option value="all">{t(locale, "explore.statusAll")}</option>
+        <option value="locally-reviewed">{t(locale, "explore.statusLocallyReviewed")}</option>
+      </select>
+    </label>
+    <output data-result-count>{format(t(locale, "explore.resultCount"), { n: visibleTopics.length })}</output>
+  </section>
+
+  <section class="topic-index" aria-labelledby="topic-index-title" data-topic-index>
+    <h2 id="topic-index-title">{t(locale, "explore.indexTitle")}</h2>
+    <ol>
+      {
+        visibleTopics.map((topic, index) => (
+          <li
+            data-topic-row
+            data-category={slugify(topic.category)}
+            data-status={topic.releaseState}
+            data-search={[
+              topic.openingQuestion,
+              topic.deck,
+              topic.category,
+              ...topic.searchTerms,
+            ].join(" ").toLowerCase()}
+          >
+            <a href={`${hrefPrefix}/topics/${topic.slug}/`}>
+              <span class="number">{String(index + 1).padStart(2, "0")}</span>
+              <span class="topic-main">
+                <small>{topic.category} · {topic.effort}</small>
+                <strong>{topic.openingQuestion}</strong>
+              </span>
+              <span class="topic-status">{topic.releaseState}</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+    <p class="empty-state" data-empty-state hidden>{t(locale, "explore.emptyState")}</p>
+  </section>
+
+  <section class="trail-index" aria-labelledby="trail-title">
+    <div>
+      <p>{t(locale, "explore.trailEyebrow")}</p>
+      <h2 id="trail-title">{t(locale, "explore.trailTitle")}</h2>
+    </div>
+    <ol>
+      {
+        trails.map((trail, index) => (
+          <li id={trail.id}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <div>
+              <strong>{trail.label}</strong>
+              <small>{trail.note} · {t(locale, "explore.fromLabel").replace("{parent}", trail.parent)}</small>
+            </div>
+            <span>{t(locale, "explore.trailOnly")}</span>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</div>
+
+<script>
+  import { t, format } from "../data/ui-strings.ts";
+
+  document.querySelectorAll<HTMLElement>("[data-explore]").forEach((root) => {
+    const locale = root.dataset.locale === "zh" ? "zh" : "en";
+    const search = root.querySelector<HTMLInputElement>("[data-topic-search]");
+    const category = root.querySelector<HTMLSelectElement>("[data-category-filter]");
+    const status = root.querySelector<HTMLSelectElement>("[data-status-filter]");
+    const count = root.querySelector<HTMLOutputElement>("[data-result-count]");
+    const empty = root.querySelector<HTMLElement>("[data-empty-state]");
+    const rows = [...root.querySelectorAll<HTMLElement>("[data-topic-row]")];
+
+    const filter = () => {
+      const query = search?.value.trim().toLowerCase() ?? "";
+      let shown = 0;
+      rows.forEach((row) => {
+        const matchesSearch = !query || row.dataset.search?.includes(query);
+        const matchesCategory = category?.value === "all" || row.dataset.category === category?.value;
+        const matchesStatus = status?.value === "all" || row.dataset.status === status?.value;
+        row.hidden = !(matchesSearch && matchesCategory && matchesStatus);
+        if (!row.hidden) shown += 1;
+      });
+      if (count) count.textContent = format(t(locale, "explore.resultCount"), { n: shown });
+      if (empty) empty.hidden = shown !== 0;
+    };
+
+    search?.addEventListener("input", filter);
+    category?.addEventListener("change", filter);
+    status?.addEventListener("change", filter);
+  });
+</script>
+
+<style>
+  .explore-header {
+    padding: clamp(3.5rem, 9vw, 8rem) clamp(1rem, 5vw, 5rem);
+    border-bottom: 2px solid #111216;
+    background: #111216;
+    color: #fff;
+  }
+
+  .explore-header > p:first-child,
+  .trail-index > div > p {
+    margin: 0 0 1rem;
+    font-size: 0.72rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+  }
+
+  h1 {
+    max-width: 11ch;
+    margin: 0;
+    font-size: clamp(3.5rem, 13vw, 9rem);
+    line-height: 0.84;
+    letter-spacing: -0.055em;
+  }
+
+  .explore-header > p:last-child {
+    max-width: 44rem;
+    margin: 1.5rem 0 0;
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+
+  .index-controls {
+    display: grid;
+    gap: 1rem;
+    padding: 1.5rem clamp(1rem, 5vw, 5rem);
+    border-bottom: 2px solid #111216;
+    background: #ffd91f;
+  }
+
+  .index-controls label {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .index-controls label span {
+    font-size: 0.68rem;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  input,
+  select {
+    width: 100%;
+    min-height: 3rem;
+    border: 2px solid #111216;
+    border-radius: 0;
+    padding: 0.65rem 0.75rem;
+    background: #fff;
+    color: #111216;
+  }
+
+  output {
+    align-self: end;
+    min-height: 3rem;
+    padding: 0.8rem;
+    border: 2px solid #111216;
+    background: #111216;
+    color: #fff;
+    font-weight: 950;
+    text-align: center;
+  }
+
+  .topic-index,
+  .trail-index {
+    padding: clamp(3rem, 8vw, 7rem) clamp(1rem, 5vw, 5rem);
+  }
+
+  h2 {
+    max-width: 11ch;
+    margin: 0 0 2rem;
+    font-size: clamp(3rem, 9vw, 6rem);
+    line-height: 0.88;
+  }
+
+  .topic-index ol,
+  .trail-index ol {
+    margin: 0;
+    padding: 0;
+    border-top: 2px solid #111216;
+    list-style: none;
+  }
+
+  .topic-index li,
+  .trail-index li {
+    border-bottom: 2px solid #111216;
+  }
+
+  .topic-index li[hidden] {
+    display: none;
+  }
+
+  .topic-index a {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr auto;
+    gap: 0.8rem;
+    align-items: start;
+    padding: 1.25rem 0;
+    text-decoration: none;
+  }
+
+  .topic-index a:hover strong {
+    text-decoration: underline;
+  }
+
+  .topic-main {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .topic-main small,
+  .topic-status,
+  .trail-index small,
+  .trail-index li > span:last-child {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .topic-main strong {
+    max-width: 34ch;
+    font-size: clamp(1.3rem, 4vw, 2.3rem);
+    line-height: 1.03;
+  }
+
+  .topic-status {
+    display: none;
+  }
+
+  .empty-state {
+    padding: 2rem 0;
+  }
+
+  .trail-index {
+    display: grid;
+    gap: 2rem;
+    border-top: 2px solid #111216;
+    background: #ff2f92;
+  }
+
+  .trail-index li {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 0.8rem;
+    padding: 1rem 0;
+  }
+
+  .trail-index li div {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .trail-index li strong {
+    font-size: 1.1rem;
+    line-height: 1.2;
+  }
+
+  .trail-index li > span:last-child {
+    display: none;
+  }
+
+  @media (min-width: 50rem) {
+    .index-controls {
+      grid-template-columns: 1.5fr 1fr 1fr 9rem;
+    }
+
+    .topic-index a {
+      grid-template-columns: 4rem minmax(22rem, 1fr) 10rem auto;
+    }
+
+    .topic-status {
+      display: block;
+    }
+
+    .trail-index {
+      grid-template-columns: minmax(18rem, 0.6fr) minmax(30rem, 1fr);
+    }
+
+    .trail-index li {
+      grid-template-columns: 3rem 1fr auto;
+    }
+
+    .trail-index li > span:last-child {
+      display: block;
+    }
+  }
+</style>

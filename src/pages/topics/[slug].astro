@@ -1,0 +1,27 @@
+---
+import TopicPageView from "../../components/TopicPageView.astro";
+import { releasePlan } from "../../data/release.ts";
+import { getTopic } from "../../data/topics.ts";
+import type { SiteTopic } from "../../data/topics.ts";
+
+export function getStaticPaths() {
+  return releasePlan.pages.map((page) => {
+    const topic = getTopic(page.slug, "en");
+    if (!topic) throw new Error(`Release plan references missing Topic: ${page.slug}`);
+    return {
+      params: { slug: page.slug },
+      props: { topic, releasePage: page, locale: "en" as const },
+    };
+  });
+}
+
+interface Props {
+  topic: SiteTopic;
+  releasePage: (typeof releasePlan.pages)[number];
+  locale: "en";
+}
+
+const { topic, releasePage, locale } = Astro.props;
+---
+
+<TopicPageView topic={topic} releasePage={releasePage} locale={locale} />

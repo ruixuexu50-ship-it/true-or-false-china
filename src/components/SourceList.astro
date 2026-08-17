@@ -1,0 +1,156 @@
+---
+import type { SiteTopic } from "../data/topics.ts";
+import type { Locale } from "../lib/i18n.ts";
+import { t } from "../data/ui-strings.ts";
+
+interface Props {
+  topic: SiteTopic;
+  locale: Locale;
+}
+
+const { topic, locale } = Astro.props;
+---
+
+<section
+  class="source-section"
+  aria-labelledby="sources-title"
+  data-source-list
+  data-topic-slug={topic.slug}
+>
+  <div class="section-kicker">{t(locale, "sources.kicker")}</div>
+  <h2 id="sources-title">{t(locale, "sources.title")}</h2>
+  <p class="section-intro">{topic.sourceIntro}</p>
+  <ol class="source-list">
+    {
+      topic.sources.map((source, index) => (
+        <li>
+          <a
+            href={source.url}
+            target="_blank"
+            rel="noreferrer"
+            data-source-id={source.id}
+          >
+            <span class="source-number">{t(locale, "sources.numberPrefix")}{String(index + 1).padStart(2, "0")}</span>
+            <span class="source-main">
+              <strong>{source.title}</strong>
+              <span>{source.publisher} · {source.date}</span>
+            </span>
+            <span class="source-caveat">{source.caveat}</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<script>
+  import {
+    createUiEventDetail,
+    WORKING_ANSWER_EVENT,
+  } from "../lib/ui-events.ts";
+
+  document.querySelectorAll<HTMLElement>("[data-source-list]").forEach((section) => {
+    const topicSlug = section.dataset.topicSlug;
+    if (!topicSlug) return;
+    section.querySelectorAll<HTMLAnchorElement>("[data-source-id]").forEach((link) => {
+      link.addEventListener("click", () => {
+        const detail = createUiEventDetail(topicSlug, "source_open", {
+          sourceId: link.dataset.sourceId,
+        });
+        if (detail) {
+          window.dispatchEvent(
+            new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+          );
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .source-section {
+    padding: clamp(4rem, 9vw, 8rem) var(--page-gutter);
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .section-kicker {
+    margin-bottom: 1rem;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+  }
+
+  h2 {
+    max-width: 14ch;
+    margin: 0;
+    font-size: clamp(2.5rem, 8vw, 6rem);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+  }
+
+  .section-intro {
+    max-width: 44rem;
+    margin: 1.5rem 0 2.5rem;
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    line-height: 1.55;
+  }
+
+  .source-list {
+    max-width: 76rem;
+    margin: 0;
+    padding: 0;
+    border-top: var(--line);
+    list-style: none;
+  }
+
+  .source-list li {
+    border-bottom: var(--line);
+  }
+
+  .source-list a {
+    display: grid;
+    grid-template-columns: 3rem 1fr auto;
+    gap: 0.8rem;
+    align-items: start;
+    padding: 1.15rem 0;
+    text-decoration: none;
+  }
+
+  .source-list a:hover .source-main strong {
+    text-decoration: underline;
+  }
+
+  .source-number,
+  .source-main span,
+  .source-caveat {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .source-main {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .source-main strong {
+    font-size: 1rem;
+  }
+
+  .source-caveat {
+    display: none;
+    max-width: 22rem;
+  }
+
+  @media (min-width: 54rem) {
+    .source-list a {
+      grid-template-columns: 4rem minmax(16rem, 1fr) minmax(16rem, 0.7fr) auto;
+      gap: 1.4rem;
+    }
+
+    .source-caveat {
+      display: block;
+    }
+  }
+</style>

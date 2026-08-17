@@ -1,0 +1,245 @@
+---
+import LocalReviewBadge from "../components/LocalReviewBadge.astro";
+import OwnerReviewDrawer from "../components/OwnerReviewDrawer.astro";
+import LanguageSwitcher from "../components/LanguageSwitcher.astro";
+import { siteIdentity } from "../data/site.ts";
+import { t } from "../data/ui-strings.ts";
+import { switchLocalePath } from "../lib/i18n.ts";
+import type { OwnerReviewKey } from "../data/owner-review.ts";
+import type { Locale } from "../lib/i18n.ts";
+// Global design tokens (colors, type families, border, shadow).
+// Brand-level visual changes happen in that one file.
+import "../styles/tokens.css";
+
+interface Props {
+  title: string;
+  description: string;
+  robots?: "noindex,nofollow" | "index,follow";
+  showLocalReviewIndicator?: boolean;
+  ownerReviewKey?: OwnerReviewKey;
+  bodyClass?: string;
+  locale?: Locale;
+}
+
+const {
+  title,
+  description,
+  robots = "noindex,nofollow",
+  showLocalReviewIndicator = true,
+  ownerReviewKey,
+  bodyClass = "",
+  locale = "en",
+} = Astro.props;
+
+const pathname = Astro.url.pathname;
+const homeHref = locale === "zh" ? "/zh/" : "/";
+const exploreHref = locale === "zh" ? "/zh/explore/" : "/explore/";
+const enAlt = switchLocalePath(pathname, "en");
+const zhAlt = switchLocalePath(pathname, "zh");
+---
+
+<!doctype html>
+<html lang={locale === "zh" ? "zh" : "en"}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="robots" content={robots} />
+    <meta name="theme-color" content="#0b0c10" />
+    <link rel="alternate" hreflang="en" href={enAlt} />
+    <link rel="alternate" hreflang="zh" href={zhAlt} />
+    <link rel="alternate" hreflang="x-default" href={enAlt} />
+    <title>{title} · {siteIdentity.name}</title>
+  </head>
+  <body class={bodyClass}>
+    <a class="skip-link" href="#main-content">{t(locale, "skipLink")}</a>
+    <LocalReviewBadge visible={showLocalReviewIndicator} />
+    {
+      showLocalReviewIndicator && ownerReviewKey && (
+        <OwnerReviewDrawer reviewKey={ownerReviewKey} />
+      )
+    }
+    <header class="site-header">
+      <a class="wordmark" href={homeHref} aria-label={`${siteIdentity.name} ${t(locale, "lang.switchTo").replace("{name}", t(locale, "lang.en"))}`}>
+        <span>T/F</span>
+        <span>{siteIdentity.name}</span>
+      </a>
+      <nav aria-label="Primary">
+        <a href={exploreHref}>{t(locale, "nav.explore")} <span aria-hidden="true">↗</span></a>
+        <LanguageSwitcher locale={locale} />
+      </nav>
+    </header>
+    <main id="main-content">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>{t(locale, "footer.line1")}</p>
+      <p>{t(locale, "footer.line2")}</p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    font-family: var(--font-body);
+    font-synthesis: none;
+    background: var(--white);
+    color: var(--ink);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 20rem;
+    overflow-x: hidden;
+    background: var(--white);
+    color: var(--ink);
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  a {
+    color: inherit;
+    text-underline-offset: 0.2em;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  .skip-link {
+    position: fixed;
+    z-index: 100;
+    top: 0.5rem;
+    left: 0.5rem;
+    transform: translateY(-180%);
+    padding: 0.7rem 0.9rem;
+    border: var(--line);
+    background: var(--yellow);
+    font-weight: 900;
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 4.5rem;
+    padding: 0.9rem clamp(1rem, 4vw, 3.5rem);
+    border-bottom: var(--line);
+    background: #fff;
+  }
+
+  .wordmark {
+    display: inline-flex;
+    gap: 0.65rem;
+    align-items: center;
+    font-size: 0.78rem;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .wordmark span:first-child {
+    padding: 0.35rem 0.42rem;
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .site-header nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.9rem, 3vw, 2rem);
+  }
+
+  .site-header nav > a {
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  main {
+    width: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  p {
+    text-wrap: pretty;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .site-footer {
+    display: grid;
+    gap: 0.5rem;
+    padding: 2rem clamp(1rem, 4vw, 3.5rem);
+    border-top: var(--line);
+    background: var(--ink);
+    color: #fff;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+  }
+
+  .site-footer p {
+    margin: 0;
+  }
+
+  :focus-visible {
+    outline: 4px solid var(--yellow);
+    outline-offset: 4px;
+  }
+
+  @media (min-width: 48rem) {
+    .site-footer {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>

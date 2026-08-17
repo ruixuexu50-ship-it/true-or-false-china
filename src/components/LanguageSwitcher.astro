@@ -1,0 +1,56 @@
+---
+import { switchLocalePath } from "../lib/i18n.ts";
+import { t } from "../data/ui-strings.ts";
+import type { Locale } from "../lib/i18n.ts";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const pathname = Astro.url.pathname;
+const enHref = switchLocalePath(pathname, "en");
+const zhHref = switchLocalePath(pathname, "zh");
+---
+
+<nav class="lang-switch" aria-label={t(locale, "lang.label")}>
+  <a
+    href={enHref}
+    class:list={["lang-link", { "is-current": locale === "en" }]}
+    hreflang="en"
+    aria-current={locale === "en" ? "page" : "false"}
+  >{t(locale, "lang.en")}</a>
+  <span class="lang-sep" aria-hidden="true">/</span>
+  <a
+    href={zhHref}
+    class:list={["lang-link", { "is-current": locale === "zh" }]}
+    hreflang="zh"
+    aria-current={locale === "zh" ? "page" : "false"}
+  >{t(locale, "lang.zh")}</a>
+</nav>
+
+<style>
+  .lang-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .lang-link {
+    text-decoration: none;
+    padding: 0.2rem 0.1rem;
+    border-bottom: 2px solid transparent;
+  }
+
+  .lang-link.is-current {
+    border-bottom-color: currentColor;
+  }
+
+  .lang-sep {
+    opacity: 0.5;
+  }
+</style>

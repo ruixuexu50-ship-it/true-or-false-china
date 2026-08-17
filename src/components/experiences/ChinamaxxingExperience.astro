@@ -1,0 +1,850 @@
+---
+import type { SiteTopic } from "../../data/topics.ts";
+import type { Locale } from "../../lib/i18n.ts";
+import { t } from "../../data/ui-strings.ts";
+
+interface Props {
+  topic: SiteTopic;
+  locale: Locale;
+}
+
+const { topic, locale } = Astro.props;
+
+// Single source of truth: claims and framings are defined in the Topic Core
+// (src/data/topics.ts) and consumed here. They are never duplicated in this
+// component. `topic` is typed as SiteTopic, which carries these arrays.
+const { claims = [], framings = [] } = topic;
+---
+
+<section class="inference-lab" data-experience-root data-experience={topic.experience.implementationId} data-topic={topic.slug} data-locale={locale}>
+  <header class="lab-header">
+    <p class="kicker">{t(locale, "cm.kicker")}</p>
+    <h2>{t(locale, "cm.title")}</h2>
+    <p>{t(locale, "cm.intro")}</p>
+  </header>
+
+  <div class="lab-grid">
+    <aside class="fixture" data-fixture>
+      <div class="fictional-banner">
+        <strong>{t(locale, "cm.fictionalBanner")}</strong>
+        <span>{t(locale, "cm.fictionalBannerSub")}</span>
+      </div>
+      <div class="fixture-image">
+        <img
+          src={topic.experience.image?.src}
+          alt={topic.experience.image?.alt}
+          width="1024"
+          height="1280"
+          loading="lazy"
+        />
+        <span class="lens lens-one" aria-hidden="true"></span>
+        <span class="lens lens-two" aria-hidden="true"></span>
+      </div>
+      <blockquote>{topic.experience.fixtureQuote}</blockquote>
+      <p>{t(locale, "cm.fixtureNote")}</p>
+    </aside>
+
+    <div class="stages">
+      <section class="stage" data-stage="1" tabindex="-1">
+        <p class="fictional-repeat">{t(locale, "cm.fictionalRepeat")}</p>
+        <p class="stage-count">{t(locale, "cm.stage1")}</p>
+        <form data-observation-form>
+          <fieldset>
+            <legend>{t(locale, "cm.observeLegend")}</legend>
+            <label>
+              <input type="radio" name="observation" value="observable" />
+              <span>{t(locale, "cm.observeOpt1")}</span>
+            </label>
+            <label>
+              <input type="radio" name="observation" value="intent-claim" />
+              <span>{t(locale, "cm.observeOpt2")}</span>
+            </label>
+            <label>
+              <input type="radio" name="observation" value="authenticity-claim" />
+              <span>{t(locale, "cm.observeOpt3")}</span>
+            </label>
+            <label>
+              <input type="radio" name="observation" value="effect-claim" />
+              <span>{t(locale, "cm.observeOpt4")}</span>
+            </label>
+          </fieldset>
+          <div class="stage-reveal" data-observation-reveal hidden aria-live="polite"></div>
+          <button type="submit" disabled data-observation-continue>{t(locale, "cm.observeContinue")}</button>
+        </form>
+      </section>
+
+      <section class="stage" data-stage="2" tabindex="-1" hidden>
+        <p class="fictional-repeat">{t(locale, "cm.fictionalRepeat")}</p>
+        <p class="stage-count">{t(locale, "cm.stage2")}</p>
+        <p class="stage-intro">{t(locale, "cm.stage2Intro")}</p>
+        <div class="claim-list">
+          {
+            claims.map((item) => (
+              <article>
+                <button
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls={`claim-panel-${item.id}`}
+                  data-claim-toggle={item.id}
+                >
+                  <span>{item.claim}</span><span aria-hidden="true">＋</span>
+                </button>
+                <div id={`claim-panel-${item.id}`} data-claim-panel={item.id} hidden>
+                  <strong>{item.status}</strong>
+                  <p>{item.reveal}</p>
+                </div>
+              </article>
+            ))
+          }
+        </div>
+        <div class="stage-actions">
+          <button type="button" data-back="1">{t(locale, "cm.backOneLayer")}</button>
+          <button type="button" data-next="3" disabled>{t(locale, "cm.compareFramings")}</button>
+        </div>
+      </section>
+
+      <section class="stage" data-stage="3" tabindex="-1" hidden>
+        <p class="fictional-repeat">{t(locale, "cm.fictionalRepeat")}</p>
+        <p class="stage-count">{t(locale, "cm.stage3")}</p>
+        <p class="stage-intro">{t(locale, "cm.stage3Intro")}</p>
+        <div class="framing-list">
+          {
+            framings.map((item) => (
+              <button type="button" aria-pressed="false" data-framing={item.id}>
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+                <small>{item.boundary}</small>
+              </button>
+            ))
+          }
+        </div>
+        <div class="selected-framings" aria-live="polite" data-selected-framings>
+          {t(locale, "cm.selectedEmpty")}
+        </div>
+        <div class="stage-actions">
+          <button type="button" data-back="2">{t(locale, "cm.backOneLayer")}</button>
+          <button type="button" data-next="4" disabled>{t(locale, "cm.unknownLegend")}</button>
+        </div>
+      </section>
+
+      <section class="stage" data-stage="4" tabindex="-1" hidden>
+        <p class="fictional-repeat">{t(locale, "cm.fictionalRepeat")}</p>
+        <p class="stage-count">{t(locale, "cm.stage4")}</p>
+        <form data-unknown-form>
+          <fieldset>
+            <legend>{t(locale, "cm.unknownLegend")}</legend>
+            <label><input type="radio" name="unknown" value="real-participant" /><span>{t(locale, "cm.unknownRealParticipant")}</span></label>
+            <label><input type="radio" name="unknown" value="audience-reception" /><span>{t(locale, "cm.unknownAudience")}</span></label>
+            <label><input type="radio" name="unknown" value="social-effect" /><span>{t(locale, "cm.unknownSocialEffect")}</span></label>
+            <label><input type="radio" name="unknown" value="prevalence" /><span>{t(locale, "cm.unknownPrevalence")}</span></label>
+            <label><input type="radio" name="unknown" value="durability" /><span>{t(locale, "cm.unknownDurability")}</span></label>
+            <label><input type="radio" name="unknown" value="causation" /><span>{t(locale, "cm.unknownCausation")}</span></label>
+            <label><input type="radio" name="unknown" value="category-scope" /><span>{t(locale, "cm.unknownCategoryScope")}</span></label>
+          </fieldset>
+          <p>{t(locale, "cm.unknownNote")}</p>
+          <div class="stage-actions">
+            <button type="button" data-back="3">{t(locale, "cm.backOneLayer")}</button>
+            <button type="submit" disabled data-unknown-continue>{t(locale, "cm.reviseSentence")}</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="stage" data-stage="5" tabindex="-1" hidden>
+        <p class="fictional-repeat">{t(locale, "cm.fictionalRepeat")}</p>
+        <p class="stage-count">{t(locale, "cm.stage5")}</p>
+        <div class="starting-sentence">
+          <small>{t(locale, "cm.startingLabel")}</small>
+          <p>{t(locale, "cm.startingSentence")}</p>
+        </div>
+        <p class="stage-intro">{t(locale, "cm.stage5Intro")}</p>
+        <div class="sentence-builder">
+          <label>
+            {t(locale, "cm.builderObservation")}
+            <select data-observation-fragment>
+              <option value="three-cues-joke">{t(locale, "cm.scaffoldOption1")}</option>
+              <option value="objects-by-identity-joke">{t(locale, "cm.scaffoldOption2")}</option>
+            </select>
+          </label>
+          <label>
+            {t(locale, "cm.builderAuthorNote")}
+            <select data-intent-fragment>
+              <option value="affectionate-intent">{t(locale, "cm.scaffoldOption3")}</option>
+              <option value="read-quickly">{t(locale, "cm.scaffoldOption4")}</option>
+            </select>
+          </label>
+          <button type="button" data-build-scaffold>{t(locale, "cm.buildScaffold")}</button>
+        </div>
+        <label class="revision-label" for="reader-revision">{t(locale, "cm.revisionLabel")}</label>
+        <textarea id="reader-revision" rows="8" data-reader-revision></textarea>
+        <p class="revision-privacy">{t(locale, "cm.revisionPrivacy")}</p>
+        <ul class="scope-prompts" data-scope-prompts aria-live="polite"></ul>
+        <div class="stage-actions">
+          <button type="button" data-back="4">{t(locale, "cm.backOneLayer")}</button>
+          <button type="button" data-compare disabled>{t(locale, "cm.compareBeforeAfter")}</button>
+        </div>
+        <section class="revision-payoff" data-revision-payoff hidden tabindex="-1" aria-live="polite">
+          <p class="payoff-label">{t(locale, "cm.payoffLabel")}</p>
+          <h3>{t(locale, "cm.payoffTitle")}</h3>
+          <div class="before-after">
+            <div><small>{t(locale, "cm.before")}</small><p>{t(locale, "cm.startingSentence")}</p></div>
+            <div><small>{t(locale, "cm.after")}</small><p data-final-revision></p></div>
+          </div>
+          <p>{t(locale, "cm.payoffBody")}</p>
+          <p class="caveat">{t(locale, "cm.payoffCaveat")}</p>
+          <button type="button" data-reset-example>{t(locale, "cm.resetExample")}</button>
+        </section>
+      </section>
+    </div>
+  </div>
+</section>
+
+<script>
+  import {
+    buildScopedInference,
+    classifyObservation,
+    findScopePrompts,
+    layerLabel,
+  } from "../../lib/inference-test.ts";
+  import {
+    createCultureInteractionState,
+    resetCultureInteractionState,
+    scrollBehaviorForMotion,
+  } from "../../lib/interaction-state.ts";
+  import {
+    createUiEventDetail,
+    WORKING_ANSWER_EVENT,
+  } from "../../lib/ui-events.ts";
+  import { t } from "../../data/ui-strings.ts";
+
+  // Scoped by the stable implementationId — a Topic slug can change without
+  // silently disabling this script.
+  document.querySelectorAll<HTMLElement>("[data-experience-root][data-experience='culture-inference-test']").forEach((root) => {
+    const locale = root.dataset.locale === "zh" ? "zh" : "en";
+    const topicSlug = root.dataset.topic;
+    if (!topicSlug) return;
+    const stage = (number: number) => root.querySelector<HTMLElement>(`[data-stage='${number}']`);
+    const showStage = (number: number) => {
+      for (let current = 1; current <= 5; current += 1) {
+        const element = stage(current);
+        if (element) element.hidden = current !== number;
+      }
+      stage(number)?.focus({ preventScroll: true });
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      stage(number)?.scrollIntoView({
+        behavior: scrollBehaviorForMotion(reducedMotion),
+        block: "start",
+      });
+    };
+
+    const interactionState = createCultureInteractionState();
+    const observationForm = root.querySelector<HTMLFormElement>("[data-observation-form]");
+    const observationContinue = root.querySelector<HTMLButtonElement>("[data-observation-continue]");
+    const observationReveal = root.querySelector<HTMLElement>("[data-observation-reveal]");
+    observationForm?.addEventListener("change", () => {
+      const choice = new FormData(observationForm).get("observation")?.toString();
+      if (!choice || !observationReveal || !observationContinue) return;
+      const result = classifyObservation(choice as Parameters<typeof classifyObservation>[0]);
+      interactionState.observationSelected = true;
+      interactionState.canOpenStage2 = true;
+      observationReveal.hidden = false;
+      observationReveal.innerHTML = result.addedInference
+        ? t(locale, "cm.inferenceAdded").replace("{layer}", layerLabel(locale, result.layer))
+        : t(locale, "cm.observationNote");
+      observationContinue.disabled = false;
+      if (!interactionState.interactionStarted) {
+        interactionState.interactionStarted = true;
+        const detail = createUiEventDetail(topicSlug, "interaction_start", {
+          action: "observation-classification",
+        });
+        if (detail) {
+          window.dispatchEvent(
+            new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+          );
+        }
+      }
+    });
+    observationForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      showStage(2);
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-claim-toggle]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const panel = root.querySelector<HTMLElement>(`[data-claim-panel='${button.dataset.claimToggle}']`);
+        if (!panel) return;
+        const willOpen = panel.hidden;
+        panel.hidden = !willOpen;
+        button.setAttribute("aria-expanded", String(willOpen));
+        const claimId = button.dataset.claimToggle;
+        if (claimId) {
+          if (willOpen) interactionState.openedClaims.add(claimId);
+          else interactionState.openedClaims.delete(claimId);
+        }
+        interactionState.canOpenStage3 = interactionState.openedClaims.size > 0;
+        const next = stage(2)?.querySelector<HTMLButtonElement>("[data-next='3']");
+        if (next) next.disabled = !interactionState.canOpenStage3;
+      });
+    });
+
+    const selectedFramings = interactionState.selectedFramings;
+    const framingTitles = new Map<string, string>();
+    root.querySelectorAll<HTMLButtonElement>("[data-framing]").forEach((button) => {
+      const title = button.querySelector("strong")?.textContent?.trim() ?? button.dataset.framing ?? "Lens";
+      if (button.dataset.framing) framingTitles.set(button.dataset.framing, title);
+      button.addEventListener("click", () => {
+        const id = button.dataset.framing;
+        if (!id) return;
+        if (selectedFramings.has(id)) selectedFramings.delete(id);
+        else selectedFramings.add(id);
+        button.setAttribute("aria-pressed", String(selectedFramings.has(id)));
+        const status = root.querySelector<HTMLElement>("[data-selected-framings]");
+        if (status) {
+          status.textContent = selectedFramings.size
+            ? [...selectedFramings].map((value) => framingTitles.get(value)).join(" + ")
+            : t(locale, "cm.selectedEmpty");
+        }
+        const fixture = root.querySelector<HTMLElement>("[data-fixture]");
+        fixture?.classList.toggle("has-one-lens", selectedFramings.size === 1);
+        fixture?.classList.toggle("has-many-lenses", selectedFramings.size > 1);
+        const next = stage(3)?.querySelector<HTMLButtonElement>("[data-next='4']");
+        if (next) next.disabled = selectedFramings.size === 0;
+      });
+    });
+
+    const unknownForm = root.querySelector<HTMLFormElement>("[data-unknown-form]");
+    const unknownContinue = root.querySelector<HTMLButtonElement>("[data-unknown-continue]");
+    unknownForm?.addEventListener("change", () => {
+      interactionState.unknownSelected = true;
+      if (unknownContinue) unknownContinue.disabled = false;
+    });
+    unknownForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      showStage(5);
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-next]").forEach((button) => {
+      button.addEventListener("click", () => showStage(Number(button.dataset.next)));
+    });
+    root.querySelectorAll<HTMLButtonElement>("[data-back]").forEach((button) => {
+      button.addEventListener("click", () => showStage(Number(button.dataset.back)));
+    });
+
+    const revision = root.querySelector<HTMLTextAreaElement>("[data-reader-revision]");
+    const compare = root.querySelector<HTMLButtonElement>("[data-compare]");
+    const promptList = root.querySelector<HTMLUListElement>("[data-scope-prompts]");
+    root.querySelector<HTMLButtonElement>("[data-build-scaffold]")?.addEventListener("click", () => {
+      if (!revision) return;
+      const observation = root.querySelector<HTMLSelectElement>("[data-observation-fragment]")?.value;
+      const authorIntent = root.querySelector<HTMLSelectElement>("[data-intent-fragment]")?.value;
+      const framing = [...selectedFramings][0] ?? "projection";
+      const unknown = unknownForm ? new FormData(unknownForm).get("unknown")?.toString() : undefined;
+      if (!observation || !authorIntent || !unknown) return;
+      interactionState.scaffold = buildScopedInference({
+        observation: observation as Parameters<typeof buildScopedInference>[0]["observation"],
+        authorIntent: authorIntent as Parameters<typeof buildScopedInference>[0]["authorIntent"],
+        framing: framing as Parameters<typeof buildScopedInference>[0]["framing"],
+        unknown: unknown as Parameters<typeof buildScopedInference>[0]["unknown"],
+      }, locale).sentence;
+      revision.value = interactionState.scaffold;
+      if (compare) compare.disabled = true;
+      revision.focus();
+    });
+
+    revision?.addEventListener("input", () => {
+      if (compare) {
+        compare.disabled =
+          !interactionState.scaffold ||
+          revision.value === interactionState.scaffold ||
+          revision.value.trim().length === 0;
+      }
+      if (promptList) {
+        promptList.replaceChildren(
+          ...findScopePrompts(revision.value, locale).map((prompt) => {
+            const item = document.createElement("li");
+            item.textContent = prompt.message;
+            return item;
+          }),
+        );
+      }
+    });
+
+    compare?.addEventListener("click", () => {
+      if (
+        !revision ||
+        !interactionState.scaffold ||
+        revision.value === interactionState.scaffold
+      ) return;
+      interactionState.revisionComplete = true;
+      const payoff = root.querySelector<HTMLElement>("[data-revision-payoff]");
+      const final = root.querySelector<HTMLElement>("[data-final-revision]");
+      if (final) final.textContent = revision.value.trim();
+      if (payoff) {
+        payoff.hidden = false;
+        payoff.focus();
+      }
+      const detail = createUiEventDetail(topicSlug, "payoff_reached", {
+        action: "sentence-revised",
+      });
+      if (detail) {
+        window.dispatchEvent(
+          new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+        );
+      }
+    });
+
+    root.querySelector<HTMLButtonElement>("[data-reset-example]")?.addEventListener("click", () => {
+      resetCultureInteractionState(interactionState);
+      observationForm?.reset();
+      unknownForm?.reset();
+      if (revision) revision.value = "";
+      if (compare) compare.disabled = true;
+      const payoff = root.querySelector<HTMLElement>("[data-revision-payoff]");
+      payoff?.setAttribute("hidden", "");
+      const final = root.querySelector<HTMLElement>("[data-final-revision]");
+      if (final) final.textContent = "";
+      root.querySelectorAll<HTMLButtonElement>("[data-claim-toggle]").forEach((button) => {
+        button.setAttribute("aria-expanded", "false");
+      });
+      root.querySelectorAll<HTMLElement>("[data-claim-panel]").forEach((panel) => {
+        panel.hidden = true;
+      });
+      const claimsNext = stage(2)?.querySelector<HTMLButtonElement>("[data-next='3']");
+      if (claimsNext) claimsNext.disabled = true;
+      root.querySelectorAll<HTMLButtonElement>("[data-framing]").forEach((button) => {
+        button.setAttribute("aria-pressed", "false");
+      });
+      const framingNext = stage(3)?.querySelector<HTMLButtonElement>("[data-next='4']");
+      if (framingNext) framingNext.disabled = true;
+      const selectedStatus = root.querySelector<HTMLElement>("[data-selected-framings]");
+      if (selectedStatus) selectedStatus.textContent = t(locale, "cm.selectedEmpty");
+      const fixture = root.querySelector<HTMLElement>("[data-fixture]");
+      fixture?.classList.remove("has-one-lens", "has-many-lenses");
+      if (unknownContinue) unknownContinue.disabled = true;
+      if (observationContinue) observationContinue.disabled = true;
+      if (observationReveal) {
+        observationReveal.hidden = true;
+        observationReveal.replaceChildren();
+      }
+      promptList?.replaceChildren();
+      root.querySelectorAll<HTMLSelectElement>("select").forEach((select) => {
+        select.selectedIndex = 0;
+      });
+      showStage(1);
+    });
+  });
+</script>
+
+<style>
+  .inference-lab {
+    padding: clamp(4rem, 9vw, 8rem) var(--page-gutter);
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .lab-header {
+    max-width: 62rem;
+    margin-bottom: 3rem;
+  }
+
+  .kicker,
+  .stage-count,
+  .payoff-label {
+    margin: 0 0 1rem;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+  }
+
+  .lab-header h2 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(2.7rem, 9vw, 6.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+
+  .lab-header > p:last-child {
+    max-width: 44rem;
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+
+  .lab-grid {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .fixture {
+    border: 3px solid var(--ink);
+    background: #fff;
+    box-shadow: 8px 8px 0 #145cff;
+  }
+
+  .fictional-banner,
+  .fictional-repeat {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    padding: 0.65rem 0.75rem;
+    border-bottom: var(--line);
+    background: #ffd91f;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+  }
+
+  .fixture-image {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .fixture-image img {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+  }
+
+  .lens {
+    position: absolute;
+    width: 60%;
+    aspect-ratio: 1;
+    border: 5px solid currentColor;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 180ms ease, opacity 180ms ease;
+  }
+
+  .lens-one {
+    top: 16%;
+    left: 4%;
+    color: #145cff;
+    transform: translateX(-18%);
+  }
+
+  .lens-two {
+    right: 3%;
+    bottom: 17%;
+    color: #ff2f92;
+    transform: translateX(18%);
+  }
+
+  .has-one-lens .lens-one,
+  .has-many-lenses .lens-one,
+  .has-many-lenses .lens-two {
+    opacity: 0.72;
+    transform: translateX(0);
+  }
+
+  .fixture blockquote {
+    margin: 0;
+    padding: 1rem;
+    border-top: var(--line);
+    font-family: Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .fixture > p {
+    margin: 0;
+    padding: 0 1rem 1rem;
+    font-size: 0.72rem;
+    line-height: 1.45;
+  }
+
+  .stage {
+    scroll-margin-top: 1rem;
+  }
+
+  .stage[hidden],
+  [hidden] {
+    display: none !important;
+  }
+
+  .fictional-repeat {
+    display: block;
+    margin-bottom: 1rem;
+    border: var(--line);
+  }
+
+  .stage-count {
+    color: #145cff;
+  }
+
+  .stage-intro {
+    max-width: 42rem;
+    line-height: 1.55;
+  }
+
+  fieldset {
+    min-width: 0;
+    margin: 0;
+    border: 0;
+    padding: 0;
+  }
+
+  legend {
+    margin-bottom: 1rem;
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    font-weight: 850;
+    line-height: 1.2;
+  }
+
+  fieldset label {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.7rem;
+    align-items: start;
+    margin: 0.7rem 0;
+    padding: 0.85rem;
+    border: var(--line);
+    cursor: pointer;
+  }
+
+  fieldset label:has(input:checked) {
+    background: #ffd91f;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  input[type="radio"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.15rem;
+    accent-color: #145cff;
+  }
+
+  .stage-reveal {
+    margin: 1rem 0;
+    padding: 1rem;
+    border-left: 7px solid #ff2f92;
+    background: #f2f5ff;
+    line-height: 1.5;
+  }
+
+  button {
+    border: var(--line);
+    border-radius: 0;
+    padding: 0.8rem 1rem;
+    background: #ffd91f;
+    color: var(--ink);
+    font-weight: 950;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0 var(--ink);
+    cursor: pointer;
+  }
+
+  button:disabled {
+    background: #ddd;
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .claim-list,
+  .framing-list {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .claim-list article {
+    border: var(--line);
+  }
+
+  .claim-list button {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    width: 100%;
+    border: 0;
+    background: #fff;
+    box-shadow: none;
+    text-align: left;
+    text-transform: none;
+  }
+
+  .claim-list button[aria-expanded="true"] {
+    background: #ffd91f;
+  }
+
+  .claim-list article > div {
+    padding: 1rem;
+    border-top: var(--line);
+    background: #f2f5ff;
+  }
+
+  .claim-list article p {
+    margin: 0.5rem 0 0;
+    line-height: 1.45;
+  }
+
+  .framing-list button {
+    display: grid;
+    gap: 0.45rem;
+    width: 100%;
+    background: #fff;
+    text-align: left;
+    text-transform: none;
+  }
+
+  .framing-list button[aria-pressed="true"] {
+    background: #ff2f92;
+    transform: translate(-3px, -3px);
+  }
+
+  .framing-list strong {
+    font-size: 1.1rem;
+  }
+
+  .framing-list span,
+  .framing-list small {
+    line-height: 1.4;
+  }
+
+  .selected-framings {
+    min-height: 3rem;
+    padding: 0.8rem;
+    border: 2px dashed var(--ink);
+    font-size: 0.8rem;
+    font-weight: 850;
+  }
+
+  .stage-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1.4rem;
+  }
+
+  .stage-actions button:first-child {
+    background: #fff;
+  }
+
+  .starting-sentence {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: var(--line);
+    background: #f1f1f1;
+  }
+
+  .starting-sentence p {
+    margin: 0.5rem 0 0;
+    font-family: Georgia, serif;
+    font-size: 1.25rem;
+    text-decoration: line-through;
+    opacity: 0.55;
+  }
+
+  .sentence-builder {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: var(--line);
+    background: #f2f5ff;
+  }
+
+  .sentence-builder label,
+  .revision-label {
+    display: grid;
+    gap: 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  select,
+  textarea {
+    width: 100%;
+    border: var(--line);
+    border-radius: 0;
+    padding: 0.8rem;
+    background: #fff;
+    color: var(--ink);
+    line-height: 1.45;
+  }
+
+  textarea {
+    resize: vertical;
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+  }
+
+  .revision-privacy {
+    margin: 0.7rem 0;
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+
+  .scope-prompts {
+    margin: 0.7rem 0;
+    padding-left: 1.3rem;
+    color: #8f154f;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .revision-payoff {
+    margin-top: 2.5rem;
+    padding: clamp(1.2rem, 4vw, 2rem);
+    border: 3px solid var(--ink);
+    background: #ffd91f;
+    box-shadow: 9px 9px 0 #ff2f92;
+  }
+
+  .revision-payoff h3 {
+    margin: 0;
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    line-height: 0.92;
+  }
+
+  .before-after {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .before-after > div {
+    padding: 1rem;
+    border: var(--line);
+    background: #fff;
+  }
+
+  .before-after > div:first-child {
+    opacity: 0.52;
+  }
+
+  .before-after p {
+    margin: 0.5rem 0 0;
+    font-family: Georgia, serif;
+    line-height: 1.4;
+  }
+
+  .revision-payoff > p {
+    line-height: 1.55;
+  }
+
+  .revision-payoff .caveat {
+    padding: 0.9rem;
+    border: var(--line);
+    background: #fff;
+  }
+
+  @media (min-width: 58rem) {
+    .lab-grid {
+      grid-template-columns: minmax(20rem, 0.72fr) minmax(30rem, 1fr);
+    }
+
+    .fixture {
+      position: sticky;
+      top: 1rem;
+    }
+
+    .before-after {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

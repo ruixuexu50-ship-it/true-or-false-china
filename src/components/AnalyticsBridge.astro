@@ -1,0 +1,40 @@
+---
+interface Props {
+  topicSlug: string;
+}
+
+const { topicSlug } = Astro.props;
+---
+
+<span hidden data-analytics-bridge data-topic-slug={topicSlug}></span>
+
+<script>
+  import { installAnalyticsBridge } from "../lib/analytics-bridge.ts";
+  import {
+    createUiEventDetail,
+    resolveEntryCategory,
+    WORKING_ANSWER_EVENT,
+  } from "../lib/ui-events.ts";
+
+  document.querySelectorAll<HTMLElement>("[data-analytics-bridge]").forEach((node) => {
+    const topicSlug = node.dataset.topicSlug;
+    if (!topicSlug || node.dataset.bridgeInstalled === "true") return;
+    node.dataset.bridgeInstalled = "true";
+
+    const doNotTrack = navigator.doNotTrack === "1";
+    installAnalyticsBridge({
+      target: window,
+      topicSlug,
+      doNotTrack,
+    });
+
+    const detail = createUiEventDetail(topicSlug, "topic_view", {
+      entry: resolveEntryCategory(window.location.href),
+    });
+    if (detail) {
+      window.dispatchEvent(
+        new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+      );
+    }
+  });
+</script>

@@ -1,0 +1,34 @@
+---
+import QrHomeArchive from "../../components/home/QrHomeArchive.astro";
+import { isPublicRelease } from "../../data/release.ts";
+import { qrHomeArchiveExperiment, siteDescription } from "../../data/site.ts";
+import { getTopicById } from "../../data/topics.ts";
+import SiteLayout from "../../layouts/SiteLayout.astro";
+
+export function getStaticPaths() {
+  if (isPublicRelease) return [];
+
+  return [{ params: { slug: qrHomeArchiveExperiment.slug } }];
+}
+
+// EXPERIMENT (archived v1 homepage). Its Topic dependencies are explicit
+// editorial config keyed by stable topicId — never array position.
+const lead = getTopicById(qrHomeArchiveExperiment.leadTopicId, "en");
+const second = getTopicById(qrHomeArchiveExperiment.secondTopicId, "en");
+if (!lead || !second) {
+  throw new Error(
+    "qrHomeArchiveExperiment references a topicId that does not exist",
+  );
+}
+---
+
+<SiteLayout
+  title={`${lead.openingQuestion} · archived homepage`}
+  description={siteDescription}
+  robots="noindex,nofollow"
+  showLocalReviewIndicator={true}
+  ownerReviewKey="qr"
+  bodyClass="qr-home-archive-page"
+>
+  <QrHomeArchive featured={lead} second={second} />
+</SiteLayout>

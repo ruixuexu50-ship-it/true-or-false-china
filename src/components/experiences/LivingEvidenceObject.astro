@@ -1,0 +1,561 @@
+---
+// Living Evidence Object v0.1
+// A real-world object belonging to a Topic, shown first-screen, that you can
+// nudge — not a game, not a render. See the brief for the rules this follows:
+//   - core content visible on first screen (no scroll-gate)
+//   - hover → micro-reaction, drag → rotate, release → light inertia,
+//     click → at most 3 info hotspots, idle → very weak life sense
+//   - forbidden: scroll-gated content, large reveal, particles, glowing AI
+//     object, forced interaction, auto product spin
+//   - mobile: body text first, object is an independent touchable block
+//
+// v0.1 ships as a reusable, data-driven component. The object is rendered in
+// CSS (matte, with tape + scuffs) as a placeholder for a real photo / model.
+// Wiring it to a Topic + extending the ExperiencePack contract is the next step.
+
+import type { Locale } from "../../lib/i18n.ts";
+
+interface LeoHotspot {
+  /** Position on the object face, as a percentage of the face box (0–100). */
+  x: number;
+  y: number;
+  label: string;
+  detail: string;
+}
+
+interface LeoConfig {
+  kicker: string;
+  title: string;
+  /** The main line. Always visible — the page is understandable without play. */
+  statement: string;
+  /** aria-label / alt for the object itself. */
+  objectLabel: string;
+  /** Non-forcing hint. Optional. */
+  hint?: string;
+  /** At most 3. */
+  hotspots: LeoHotspot[];
+}
+
+interface Props {
+  config: LeoConfig;
+  locale?: Locale;
+}
+
+const { config, locale = "en" } = Astro.props;
+const hotspots = config.hotspots.slice(0, 3);
+---
+
+<section class="leo" data-leo-root data-locale={locale}>
+  <header class="leo-header">
+    <p class="leo-kicker">{config.kicker}</p>
+    <h2 class="leo-title">{config.title}</h2>
+    <p class="leo-statement">{config.statement}</p>
+  </header>
+
+  <div class="leo-stage" data-leo-stage>
+    <div class="leo-float" data-leo-float>
+      <div
+        class="leo-object"
+        data-leo-object
+        tabindex="0"
+        role="img"
+        aria-label={config.objectLabel}
+      >
+        <div class="leo-face leo-face--front">
+          <div class="leo-plaque" aria-hidden="true">
+            <svg class="leo-qr" viewBox="0 0 100 100" role="presentation">
+              <rect x="6" y="6" width="88" height="88" rx="7" fill="#f3efe6" />
+              <rect x="6" y="6" width="88" height="88" rx="7" fill="none" stroke="#d8d2c4" stroke-width="1.5" />
+              <!-- finder patterns -->
+              <rect x="13" y="13" width="22" height="22" fill="none" stroke="#1c1b18" stroke-width="4.5" />
+              <rect x="19" y="19" width="10" height="10" fill="#1c1b18" />
+              <rect x="65" y="13" width="22" height="22" fill="none" stroke="#1c1b18" stroke-width="4.5" />
+              <rect x="71" y="19" width="10" height="10" fill="#1c1b18" />
+              <rect x="13" y="65" width="22" height="22" fill="none" stroke="#1c1b18" stroke-width="4.5" />
+              <rect x="19" y="71" width="10" height="10" fill="#1c1b18" />
+              <!-- scattered modules -->
+              <rect x="42" y="15" width="5" height="5" fill="#1c1b18" />
+              <rect x="51" y="15" width="5" height="5" fill="#1c1b18" />
+              <rect x="42" y="24" width="5" height="5" fill="#1c1b18" />
+              <rect x="60" y="24" width="5" height="5" fill="#1c1b18" />
+              <rect x="42" y="42" width="5" height="5" fill="#1c1b18" />
+              <rect x="51" y="42" width="5" height="5" fill="#1c1b18" />
+              <rect x="60" y="42" width="5" height="5" fill="#1c1b18" />
+              <rect x="69" y="42" width="5" height="5" fill="#1c1b18" />
+              <rect x="42" y="51" width="5" height="5" fill="#1c1b18" />
+              <rect x="60" y="51" width="5" height="5" fill="#1c1b18" />
+              <rect x="69" y="51" width="5" height="5" fill="#1c1b18" />
+              <rect x="42" y="60" width="5" height="5" fill="#1c1b18" />
+              <rect x="51" y="69" width="5" height="5" fill="#1c1b18" />
+              <rect x="60" y="69" width="5" height="5" fill="#1c1b18" />
+              <rect x="69" y="69" width="5" height="5" fill="#1c1b18" />
+              <!-- printed line -->
+              <rect x="30" y="86" width="40" height="3" rx="1.5" fill="#1c1b18" opacity="0.55" />
+            </svg>
+            <span class="leo-tape" aria-hidden="true"></span>
+            <span class="leo-smudge" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="leo-face leo-face--back" aria-hidden="true"></div>
+
+        {
+          hotspots.map((h, i) => (
+            <button
+              type="button"
+              class="leo-hotspot"
+              data-leo-hotspot={i}
+              data-detail={h.detail}
+              style={`--hx:${h.x}%; --hy:${h.y}%`}
+              aria-label={h.label}
+              aria-expanded="false"
+            >
+              <span class="leo-hotspot-dot" aria-hidden="true" />
+              <span class="leo-hotspot-label">{h.label}</span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  {config.hint && <p class="leo-hint">{config.hint}</p>}
+
+  <div class="leo-note" data-leo-note aria-live="polite" hidden>
+    <h3 data-leo-note-title></h3>
+    <p data-leo-note-body></p>
+  </div>
+</section>
+
+<style>
+  .leo {
+    --leo-ink: #1c1b18;
+    --leo-matte: #efe9dd;
+    --leo-edge: #cfc7b6;
+    display: block;
+    width: 100%;
+    max-width: 60rem;
+    margin-inline: auto;
+    padding: 1.25rem 1rem 2rem;
+    color: var(--leo-ink);
+  }
+
+  /* ── First-screen core content. Always visible; no scroll to unlock. ── */
+  .leo-header {
+    max-width: 42rem;
+  }
+  .leo-kicker {
+    margin: 0 0 0.5rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6b6657;
+  }
+  .leo-title {
+    margin: 0 0 0.6rem;
+    font-size: clamp(1.5rem, 4vw, 2.1rem);
+    line-height: 1.15;
+    font-weight: 650;
+  }
+  .leo-statement {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.5;
+    color: #3a382f;
+  }
+
+  /* ── Stage ── */
+  .leo-stage {
+    margin: 1.75rem 0 0;
+    height: min(46vh, 26rem);
+    perspective: 1100px;
+    display: grid;
+    place-items: center;
+    touch-action: pan-y; /* drag rotates horizontally; vertical scroll stays available */
+    user-select: none;
+  }
+  .leo-float {
+    transform-style: preserve-3d;
+    transition: transform 0.25s ease-out;
+  }
+  /* idle: very weak life sense — a slow, tiny float, never a spin */
+  .leo.is-idle .leo-float {
+    animation: leo-breathe 7.5s ease-in-out infinite;
+  }
+  @keyframes leo-breathe {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .leo-object {
+    position: relative;
+    width: min(70vw, 17rem);
+    height: min(70vw, 17rem);
+    transform-style: preserve-3d;
+    cursor: grab;
+    outline: none;
+    transition: filter 0.2s ease;
+  }
+  /* hover micro-reaction — a soft matte shadow shift, never a glow */
+  .leo-float:hover .leo-object,
+  .leo-object:focus-visible {
+    filter: drop-shadow(0 10px 16px rgba(28, 27, 24, 0.22));
+  }
+  .leo-object:active {
+    cursor: grabbing;
+  }
+  .leo-object:focus-visible {
+    outline: 2px solid #6b6657;
+    outline-offset: 8px;
+    border-radius: 12px;
+  }
+
+  .leo-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    backface-visibility: hidden;
+  }
+  .leo-face--front {
+    transform: translateZ(0.5rem);
+  }
+  .leo-face--back {
+    transform: rotateY(180deg) translateZ(0.5rem);
+    background: linear-gradient(150deg, #e7e0d2, #d3cbb9);
+    box-shadow: inset 0 0 24px rgba(120, 110, 90, 0.25);
+  }
+
+  /* ── The placeholder object: a weathered merchant QR plaque ── */
+  .leo-plaque {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+    background: linear-gradient(160deg, #fbf8f1 0%, #efe8da 60%, #e3dac8 100%);
+    box-shadow:
+      inset 0 1px 2px rgba(255, 255, 255, 0.7),
+      inset 0 -10px 22px rgba(120, 110, 90, 0.18),
+      0 14px 30px rgba(28, 27, 24, 0.18);
+    overflow: hidden;
+    transition: transform 0.2s ease;
+  }
+  .leo-float:hover .leo-plaque {
+    transform: scale(1.015);
+  }
+  .leo-qr {
+    position: absolute;
+    inset: 14%;
+    width: 72%;
+    height: 72%;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.06));
+  }
+  /* usage trace: a strip of packing tape, slightly askew */
+  .leo-tape {
+    position: absolute;
+    top: -8%;
+    left: 18%;
+    width: 42%;
+    height: 26%;
+    background: linear-gradient(105deg, rgba(226, 218, 196, 0.55), rgba(240, 234, 218, 0.32));
+    border: 1px solid rgba(180, 170, 145, 0.35);
+    transform: rotate(-13deg);
+    mix-blend-mode: multiply;
+  }
+  /* usage trace: a soft smudge */
+  .leo-smudge {
+    position: absolute;
+    right: 8%;
+    bottom: 10%;
+    width: 34%;
+    height: 22%;
+    background: radial-gradient(closest-side, rgba(120, 110, 90, 0.18), transparent);
+    border-radius: 50%;
+    transform: rotate(20deg);
+  }
+
+  /* ── Hotspots (max 3) ── */
+  .leo-hotspot {
+    position: absolute;
+    left: var(--hx);
+    top: var(--hy);
+    transform: translate(-50%, -50%);
+    width: 1.9rem;
+    height: 1.9rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    z-index: 3;
+  }
+  .leo-hotspot-dot {
+    display: block;
+    width: 0.85rem;
+    height: 0.85rem;
+    margin: 0.5rem auto;
+    border-radius: 50%;
+    background: #1c1b18;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    transition: transform 0.18s ease, background 0.18s ease;
+  }
+  .leo-hotspot:hover .leo-hotspot-dot,
+  .leo-hotspot[aria-expanded="true"] .leo-hotspot-dot {
+    transform: scale(1.25);
+    background: #b5462f;
+  }
+  .leo-hotspot-label {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    margin-top: 0.2rem;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: #3a382f;
+    background: rgba(255, 255, 255, 0.86);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+  }
+  .leo-hotspot:hover .leo-hotspot-label,
+  .leo-hotspot:focus-visible .leo-hotspot-label {
+    opacity: 1;
+  }
+
+  /* ── Hint + note ── */
+  .leo-hint {
+    margin: 1rem 0 0;
+    font-size: 0.85rem;
+    color: #6b6657;
+    text-align: center;
+  }
+  .leo-note {
+    margin: 1.25rem auto 0;
+    max-width: 38rem;
+    padding: 0.9rem 1.1rem;
+    background: #f7f3ea;
+    border: 1px solid #e0d8c7;
+    border-left: 3px solid #b5462f;
+    border-radius: 8px;
+    opacity: 1;
+    transition: opacity 0.18s ease;
+  }
+  .leo-note[hidden] {
+    display: none;
+  }
+  .leo-note h3 {
+    margin: 0 0 0.35rem;
+    font-size: 0.98rem;
+  }
+  .leo-note p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #3a382f;
+  }
+
+  /* ── Mobile: body text first, object is a bounded independent block ── */
+  @media (max-width: 38rem) {
+    .leo-stage {
+      height: min(40vh, 18rem);
+      margin-top: 1.25rem;
+    }
+    .leo-object {
+      width: min(62vw, 13rem);
+      height: min(62vw, 13rem);
+    }
+    .leo-hint {
+      text-align: left;
+    }
+  }
+
+  /* ── Reduced motion: keep drag + discrete click, drop idle + inertia ── */
+  @media (prefers-reduced-motion: reduce) {
+    .leo.is-idle .leo-float {
+      animation: none;
+    }
+    .leo-float,
+    .leo-object,
+    .leo-plaque,
+    .leo-hotspot-dot,
+    .leo-note {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  function initLeo(root: HTMLElement) {
+    const stage = root.querySelector<HTMLElement>("[data-leo-stage]");
+    const obj = root.querySelector<HTMLElement>("[data-leo-object]");
+    const note = root.querySelector<HTMLElement>("[data-leo-note]");
+    if (!stage || !obj || !note) return;
+    const noteTitle = note.querySelector<HTMLElement>("[data-leo-note-title]");
+    const noteBody = note.querySelector<HTMLElement>("[data-leo-note-body]");
+    const spots = Array.from(
+      root.querySelectorAll<HTMLButtonElement>("[data-leo-hotspot]")
+    );
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const clamp = (v: number, lo: number, hi: number) =>
+      Math.max(lo, Math.min(hi, v));
+
+    let rotX = -7;
+    let rotY = 17;
+    let velX = 0;
+    let velY = 0;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    let moved = 0;
+    let downT = 0;
+    let rafId: number | null = null;
+    let idleTimer: number | null = null;
+    let active = -1;
+
+    function apply() {
+      obj.style.transform = `rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg)`;
+    }
+    apply();
+
+    function startIdle() {
+      if (reduce) return;
+      if (idleTimer) window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => root.classList.add("is-idle"), 4200);
+    }
+    function stopIdle() {
+      root.classList.remove("is-idle");
+      startIdle();
+    }
+
+    function inertia() {
+      if (dragging) {
+        rafId = null;
+        return;
+      }
+      if (Math.abs(velY) > 0.03 || Math.abs(velX) > 0.03) {
+        rotY += velY;
+        rotX = clamp(rotX + velX, -58, 58);
+        velY *= 0.93;
+        velX *= 0.93;
+        apply();
+        rafId = requestAnimationFrame(inertia);
+      } else {
+        velX = velY = 0;
+        rafId = null;
+        startIdle();
+      }
+    }
+
+    function openSpot(i: number) {
+      const btn = spots[i];
+      if (!btn) return;
+      active = i;
+      if (noteTitle) noteTitle.textContent = btn.getAttribute("aria-label") || "";
+      if (noteBody) noteBody.textContent = btn.dataset.detail || "";
+      note.hidden = false;
+      spots.forEach((s, j) =>
+        s.setAttribute("aria-expanded", j === i ? "true" : "false")
+      );
+    }
+    function closeNote() {
+      active = -1;
+      note.hidden = true;
+      spots.forEach((s) => s.setAttribute("aria-expanded", "false"));
+    }
+    function cycleSpot() {
+      if (spots.length === 0) return;
+      const next = active + 1;
+      if (next >= spots.length) closeNote();
+      else openSpot(next);
+    }
+
+    stage.addEventListener("pointerdown", (e) => {
+      if (e.target instanceof Element && e.target.closest("[data-leo-hotspot]"))
+        return;
+      dragging = true;
+      moved = 0;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      downT = Date.now();
+      velX = velY = 0;
+      stopIdle();
+      if (rafId) cancelAnimationFrame(rafId);
+      try {
+        stage.setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+    });
+
+    stage.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      moved += Math.abs(dx) + Math.abs(dy);
+      rotY += dx * 0.4;
+      rotX = clamp(rotX - dy * 0.4, -58, 58);
+      velY = dx * 0.4;
+      velX = -dy * 0.4;
+      apply();
+    });
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      const isClick = moved < 6 && Date.now() - downT < 500;
+      if (isClick) {
+        cycleSpot();
+        startIdle();
+      } else if (reduce) {
+        velX = velY = 0;
+        startIdle();
+      } else {
+        rafId = requestAnimationFrame(inertia);
+      }
+    }
+    stage.addEventListener("pointerup", endDrag);
+    stage.addEventListener("pointercancel", endDrag);
+
+    spots.forEach((btn, i) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (active === i) closeNote();
+        else openSpot(i);
+      });
+    });
+
+    obj.addEventListener("keydown", (e) => {
+      const step = 8;
+      if (e.key === "ArrowLeft") {
+        rotY -= step;
+        apply();
+        stopIdle();
+      } else if (e.key === "ArrowRight") {
+        rotY += step;
+        apply();
+        stopIdle();
+      } else if (e.key === "ArrowUp") {
+        rotX = clamp(rotX - step, -58, 58);
+        apply();
+        stopIdle();
+      } else if (e.key === "ArrowDown") {
+        rotX = clamp(rotX + step, -58, 58);
+        apply();
+        stopIdle();
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        cycleSpot();
+      }
+    });
+
+    startIdle();
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-leo-root]").forEach(initLeo);
+</script>

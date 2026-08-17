@@ -1,0 +1,535 @@
+---
+import type { SiteTopic } from "../../data/topics.ts";
+import type { Locale } from "../../lib/i18n.ts";
+import { t } from "../../data/ui-strings.ts";
+
+interface Props {
+  topic: SiteTopic;
+  locale: Locale;
+}
+
+const { topic, locale } = Astro.props;
+---
+
+<section class="qr-experience" data-experience-root data-experience={topic.experience.implementationId} data-topic={topic.slug} data-locale={locale}>
+  <header class="experience-header">
+    <p class="kicker">{t(locale, "qr.kicker")}</p>
+    <h2>{t(locale, "qr.title")}</h2>
+    <p>{t(locale, "qr.intro")}</p>
+  </header>
+
+  <div class="route-map" aria-label={t(locale, "qr.routeStatus")} data-route-map>
+    <div class="route-node" data-route-node="funding">
+      <span>01</span><strong>{t(locale, "qr.gateFunding")}</strong><small data-route-label="funding">{t(locale, "qr.chooseBelow")}</small>
+    </div>
+    <span class="route-line" data-route-line="funding" aria-hidden="true"></span>
+    <div class="route-node" data-route-node="onboarding">
+      <span>02</span><strong>{t(locale, "qr.gateWallet")}</strong><small data-route-label="wallet">{t(locale, "qr.chooseBelow")}</small>
+    </div>
+    <span class="route-line" data-route-line="wallet" aria-hidden="true"></span>
+    <div class="route-node" data-route-node="merchant-route">
+      <span>03</span><strong>{t(locale, "qr.gateMerchant")}</strong><small data-route-label="merchant">{t(locale, "qr.chooseBelow")}</small>
+    </div>
+  </div>
+
+  <form data-qr-form>
+    <fieldset>
+      <legend><span>1 / 3</span> {t(locale, "qr.q1")}</legend>
+      <label>
+        <input type="radio" name="funding" value="foreign-card" />
+        <span>{t(locale, "qr.fundingVisa")}</span>
+      </label>
+      <label>
+        <input type="radio" name="funding" value="overseas-wallet" />
+        <span>{t(locale, "qr.fundingWallet")}</span>
+      </label>
+      <label>
+        <input type="radio" name="funding" value="mainland-funding" />
+        <span>{t(locale, "qr.fundingLocal")}</span>
+      </label>
+      <label>
+        <input type="radio" name="funding" value="funding-unknown" />
+        <span>{t(locale, "qr.fundingUnsure")}</span>
+      </label>
+      <p>{t(locale, "qr.fundingNote")}</p>
+    </fieldset>
+
+    <fieldset>
+      <legend><span>2 / 3</span> {t(locale, "qr.q2")}</legend>
+      <label>
+        <input type="radio" name="wallet" value="alipay-linked" />
+        <span>{t(locale, "qr.walletAlipay")}</span>
+      </label>
+      <label>
+        <input type="radio" name="wallet" value="weixin-linked" />
+        <span>{t(locale, "qr.walletWeixin")}</span>
+      </label>
+      <label>
+        <input type="radio" name="wallet" value="compatible-wallet-visible" />
+        <span>{t(locale, "qr.walletOverseas")}</span>
+      </label>
+      <label>
+        <input type="radio" name="wallet" value="wallet-incomplete" />
+        <span>{t(locale, "qr.walletUnfinished")}</span>
+      </label>
+      <label>
+        <input type="radio" name="wallet" value="wallet-unknown" />
+        <span>{t(locale, "qr.walletUnsure")}</span>
+      </label>
+      <p>{t(locale, "qr.walletNote")}</p>
+    </fieldset>
+
+    <fieldset>
+      <legend><span>3 / 3</span> {t(locale, "qr.q3")}</legend>
+      <label>
+        <input type="radio" name="merchant" value="merchant-app-qr" />
+        <span>{t(locale, "qr.merchantApp")}</span>
+      </label>
+      <label>
+        <input type="radio" name="merchant" value="international-pos" />
+        <span>{t(locale, "qr.merchantTerminal")}</span>
+      </label>
+      <label>
+        <input type="radio" name="merchant" value="small-or-personal-qr" />
+        <span>{t(locale, "qr.merchantStall")}</span>
+      </label>
+      <label>
+        <input type="radio" name="merchant" value="merchant-unknown" />
+        <span>{t(locale, "qr.merchantUnchecked")}</span>
+      </label>
+      <p>{t(locale, "qr.merchantNote")}</p>
+    </fieldset>
+
+    <button class="diagnose" type="submit" disabled data-diagnose>
+      {t(locale, "qr.diagnose")}
+    </button>
+  </form>
+
+  <section class="payoff" data-qr-payoff hidden aria-live="polite" tabindex="-1">
+    <p class="payoff-label">{t(locale, "qr.payoffLabel")}</p>
+    <h3>{t(locale, "qr.weakLink")} <span data-diagnosis-name>{t(locale, "qr.stillUnknown")}</span></h3>
+    <p class="lead" data-diagnosis-lead></p>
+    <p data-diagnosis-next></p>
+    <div class="caveat">
+      <strong>{t(locale, "qr.cannotSee")}</strong>
+      <p>{t(locale, "qr.cannotSeeCaveat")}</p>
+    </div>
+    <p class="practical">{t(locale, "qr.practical")}</p>
+    <div class="payoff-actions">
+      <button type="button" data-change-answers>{t(locale, "qr.changeAnswers")}</button>
+      <a href="#sources-title">{t(locale, "qr.openSources")}</a>
+    </div>
+  </section>
+</section>
+
+<script>
+  import { diagnoseQrRoute } from "../../lib/qr-diagnosis.ts";
+  import {
+    createQrInteractionState,
+    invalidateQrDiagnosis,
+    revealQrDiagnosis,
+  } from "../../lib/interaction-state.ts";
+  import {
+    createUiEventDetail,
+    WORKING_ANSWER_EVENT,
+  } from "../../lib/ui-events.ts";
+  import { t } from "../../data/ui-strings.ts";
+  import type { UiKey } from "../../data/ui-strings.ts";
+
+  const humanLabelKeys: Record<string, UiKey> = {
+    "foreign-card": "qr.fundingVisa",
+    "overseas-wallet": "qr.fundingWallet",
+    "mainland-funding": "qr.fundingLocal",
+    "funding-unknown": "qr.fundingUnsure",
+    "alipay-linked": "qr.walletAlipay",
+    "weixin-linked": "qr.walletWeixin",
+    "compatible-wallet-visible": "qr.walletOverseas",
+    "wallet-incomplete": "qr.walletUnfinished",
+    "wallet-unknown": "qr.walletUnsure",
+    "merchant-app-qr": "qr.merchantApp",
+    "international-pos": "qr.merchantTerminal",
+    "small-or-personal-qr": "qr.merchantStall",
+    "merchant-unknown": "qr.merchantUnchecked",
+  };
+
+  const weakLinkKeys: Record<string, UiKey> = {
+    funding: "qr.gateFunding",
+    onboarding: "qr.gateWallet",
+    "merchant-route": "qr.gateMerchant",
+    "live-check": "qr.liveCheck",
+  };
+
+  // Scoped by the stable implementationId — a Topic slug can change without
+  // silently disabling this script.
+  document.querySelectorAll<HTMLElement>("[data-experience-root][data-experience='qr-route-diagnosis']").forEach((root) => {
+    const locale = root.dataset.locale === "zh" ? "zh" : "en";
+    const form = root.querySelector<HTMLFormElement>("[data-qr-form]");
+    const diagnoseButton = root.querySelector<HTMLButtonElement>("[data-diagnose]");
+    const payoff = root.querySelector<HTMLElement>("[data-qr-payoff]");
+    const topicSlug = root.dataset.topic;
+    if (!form || !diagnoseButton || !payoff || !topicSlug) return;
+    let interactionStarted = false;
+    let interactionState = createQrInteractionState();
+
+    const hideStalePayoff = () => {
+      interactionState = invalidateQrDiagnosis(interactionState);
+      payoff.hidden = true;
+      delete payoff.dataset.resultId;
+      root
+        .querySelectorAll("[data-route-node]")
+        .forEach((node) => node.classList.remove("is-weak"));
+      const name = payoff.querySelector<HTMLElement>("[data-diagnosis-name]");
+      const lead = payoff.querySelector<HTMLElement>("[data-diagnosis-lead]");
+      const next = payoff.querySelector<HTMLElement>("[data-diagnosis-next]");
+      if (name) name.textContent = t(locale, "qr.stillUnknown");
+      if (lead) lead.textContent = "";
+      if (next) next.textContent = "";
+    };
+
+    const selected = () => {
+      const data = new FormData(form);
+      return {
+        funding: data.get("funding")?.toString(),
+        wallet: data.get("wallet")?.toString(),
+        merchant: data.get("merchant")?.toString(),
+      };
+    };
+
+    const updateRoute = () => {
+      const values = selected();
+      for (const key of ["funding", "wallet", "merchant"] as const) {
+        const value = values[key];
+        const label = root.querySelector<HTMLElement>(`[data-route-label='${key}']`);
+        if (label) label.textContent = value ? t(locale, humanLabelKeys[value]) : t(locale, "qr.chooseBelow");
+      }
+      root.querySelector("[data-route-node='funding']")?.classList.toggle("is-known", Boolean(values.funding));
+      root.querySelector("[data-route-node='onboarding']")?.classList.toggle("is-known", Boolean(values.wallet));
+      root.querySelector("[data-route-node='merchant-route']")?.classList.toggle("is-known", Boolean(values.merchant));
+      root.querySelector("[data-route-line='funding']")?.classList.toggle("is-known", Boolean(values.funding && values.wallet));
+      root.querySelector("[data-route-line='wallet']")?.classList.toggle("is-known", Boolean(values.wallet && values.merchant));
+      diagnoseButton.disabled = !(values.funding && values.wallet && values.merchant);
+    };
+
+    form.addEventListener("change", () => {
+      hideStalePayoff();
+      updateRoute();
+      if (!interactionStarted) {
+        interactionStarted = true;
+        const detail = createUiEventDetail(topicSlug, "interaction_start", {
+          action: "route-choice",
+        });
+        if (detail) {
+          window.dispatchEvent(
+            new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+          );
+        }
+      }
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const values = selected();
+      if (!values.funding || !values.wallet || !values.merchant) return;
+      const result = diagnoseQrRoute({
+        funding: values.funding as Parameters<typeof diagnoseQrRoute>[0]["funding"],
+        wallet: values.wallet as Parameters<typeof diagnoseQrRoute>[0]["wallet"],
+        merchant: values.merchant as Parameters<typeof diagnoseQrRoute>[0]["merchant"],
+      }, locale);
+      interactionState = revealQrDiagnosis(
+        interactionState,
+        result.id,
+        result.weakLink,
+      );
+      root.querySelectorAll("[data-route-node]").forEach((node) => node.classList.remove("is-weak"));
+      if (result.weakLink !== "live-check") {
+        root.querySelector(`[data-route-node='${result.weakLink}']`)?.classList.add("is-weak");
+      }
+      const name = payoff.querySelector<HTMLElement>("[data-diagnosis-name]");
+      const lead = payoff.querySelector<HTMLElement>("[data-diagnosis-lead]");
+      const next = payoff.querySelector<HTMLElement>("[data-diagnosis-next]");
+      if (name) name.textContent = t(locale, weakLinkKeys[result.weakLink] ?? "qr.stillUnknown");
+      if (lead) lead.textContent = result.lead;
+      if (next) next.textContent = result.nextCheck;
+      payoff.hidden = false;
+      payoff.dataset.resultId = result.id;
+      payoff.focus();
+      const detail = createUiEventDetail(topicSlug, "payoff_reached", {
+        action: result.id,
+      });
+      if (detail) {
+        window.dispatchEvent(
+          new CustomEvent(WORKING_ANSWER_EVENT, { detail }),
+        );
+      }
+    });
+
+    root.querySelector<HTMLButtonElement>("[data-change-answers]")?.addEventListener("click", () => {
+      form.querySelector<HTMLInputElement>("input[name='funding']:checked")?.focus();
+    });
+  });
+</script>
+
+<style>
+  .qr-experience {
+    --route-blue: #063bc9;
+    --route-coral: #ff5b42;
+    --route-acid: #b8ef16;
+    padding: clamp(4rem, 9vw, 8rem) var(--page-gutter);
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .experience-header {
+    max-width: 62rem;
+  }
+
+  .kicker,
+  .payoff-label {
+    margin: 0 0 1rem;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+  }
+
+  h2 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(2.7rem, 9vw, 6.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+
+  .experience-header > p:last-child {
+    max-width: 43rem;
+    margin: 1.5rem 0 0;
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+
+  .route-map {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    max-width: 70rem;
+    margin: 3rem 0;
+  }
+
+  .route-node {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3rem 0.8rem;
+    min-height: 7rem;
+    align-content: center;
+    padding: 1rem;
+    border: 3px dashed var(--ink);
+    background: #fff;
+    box-shadow: 6px 6px 0 var(--ink);
+    transition: transform 210ms ease, background 210ms ease;
+  }
+
+  .route-node > span {
+    grid-row: span 2;
+    font-weight: 950;
+  }
+
+  .route-node strong {
+    font-size: 1.2rem;
+    text-transform: uppercase;
+  }
+
+  .route-node small {
+    line-height: 1.3;
+  }
+
+  .route-node.is-known {
+    border-style: solid;
+    background: var(--route-blue);
+    color: #fff;
+    transform: translate(-3px, -3px);
+  }
+
+  .route-node.is-weak {
+    background: var(--route-acid);
+    color: var(--ink);
+    animation: one-pulse 300ms ease-out 1;
+  }
+
+  .route-line {
+    width: 0.55rem;
+    height: 2rem;
+    margin: 0 auto;
+    background: repeating-linear-gradient(to bottom, var(--ink) 0 4px, transparent 4px 8px);
+  }
+
+  .route-line.is-known {
+    background: var(--route-coral);
+  }
+
+  form {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 70rem;
+  }
+
+  fieldset {
+    min-width: 0;
+    margin: 0;
+    border: var(--line);
+    padding: 1rem;
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  legend {
+    padding: 0 0.35rem;
+    font-weight: 950;
+    line-height: 1.25;
+  }
+
+  legend span {
+    color: var(--route-blue);
+  }
+
+  label {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.7rem;
+    align-items: start;
+    margin: 0.75rem 0;
+    padding: 0.8rem;
+    border: 1.5px solid var(--ink);
+    cursor: pointer;
+  }
+
+  label:has(input:checked) {
+    background: var(--route-acid);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0.1rem 0 0;
+    accent-color: var(--route-blue);
+  }
+
+  fieldset > p {
+    margin: 0.8rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .diagnose,
+  .payoff button,
+  .payoff a {
+    justify-self: start;
+    min-height: 3.4rem;
+    border: var(--line);
+    border-radius: 0;
+    padding: 0.85rem 1.1rem;
+    background: var(--route-coral);
+    color: var(--ink);
+    font-weight: 950;
+    text-decoration: none;
+    text-transform: uppercase;
+    box-shadow: 5px 5px 0 var(--ink);
+    cursor: pointer;
+  }
+
+  .diagnose:disabled {
+    background: #d7d7d7;
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .payoff {
+    max-width: 70rem;
+    margin-top: 3rem;
+    padding: clamp(1.3rem, 4vw, 3rem);
+    border: 3px solid var(--ink);
+    background: var(--route-acid);
+    box-shadow: 10px 10px 0 var(--route-blue);
+  }
+
+  .payoff[hidden] {
+    display: none;
+  }
+
+  .payoff h3 {
+    max-width: 18ch;
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    line-height: 0.95;
+  }
+
+  .payoff > p {
+    max-width: 48rem;
+    line-height: 1.55;
+  }
+
+  .lead {
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    font-weight: 800;
+  }
+
+  .caveat {
+    max-width: 50rem;
+    margin: 1.4rem 0;
+    padding: 1rem;
+    border: var(--line);
+    background: #fff;
+  }
+
+  .caveat p {
+    margin: 0.4rem 0 0;
+    line-height: 1.45;
+  }
+
+  .practical {
+    font-weight: 800;
+  }
+
+  .payoff-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1.4rem;
+  }
+
+  .payoff a {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+  }
+
+  @keyframes one-pulse {
+    50% { transform: translate(-5px, -5px) scale(1.02); }
+  }
+
+  @media (min-width: 46rem) {
+    .route-map {
+      grid-template-columns: 1fr 3.5rem 1fr 3.5rem 1fr;
+      align-items: center;
+    }
+
+    .route-line {
+      width: 100%;
+      height: 0.55rem;
+      background: repeating-linear-gradient(to right, var(--ink) 0 4px, transparent 4px 8px);
+    }
+
+    .route-line.is-known {
+      background: var(--route-coral);
+    }
+  }
+
+  @media (min-width: 62rem) {
+    form {
+      grid-template-columns: repeat(3, 1fr);
+      align-items: start;
+    }
+
+    .diagnose {
+      grid-column: 1 / -1;
+    }
+  }
+</style>
