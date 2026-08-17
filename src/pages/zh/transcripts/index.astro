@@ -1,0 +1,19 @@
+---
+import LibraryIndex from "../../../components/library/LibraryIndex.astro";
+import { isPublicRelease } from "../../../data/release.ts";
+import { t } from "../../../data/ui-strings.ts";
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const description = t("zh", "ts.intro");
+---
+
+<SiteLayout
+  title={t("zh", "ts.title")}
+  description={description}
+  robots={isPublicRelease ? "index,follow" : "noindex,nofollow"}
+  showLocalReviewIndicator={!isPublicRelease}
+  bodyClass="library-page"
+  locale="zh"
+>
+  <LibraryIndex locale="zh" variant="transcripts" />
+</SiteLayout>

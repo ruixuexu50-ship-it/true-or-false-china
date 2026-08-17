@@ -1,0 +1,540 @@
+---
+// Knowledge Cabinet — the homepage's 3D navigation anchor.
+//
+// A modular research cabinet in the object-system language: a light
+// panel body with an ink border, a visible side plane, small feet, and
+// a hard floor shadow. Inside, five real library entries sit as
+// physical modules (dotted Topics, striped Video scripts, yellow
+// Checklists drawer, lavender Discord, black TikTok). Hover lifts a
+// module; click gives a short pop-out motion before navigating;
+// pointer movement tilts the whole cabinet a few degrees. Entries
+// without a real URL render as honest locked modules, never fake hrefs.
+//
+// Pure CSS 3D + a few lines of pointer/click JS + an optional micro
+// sound layer (off by default). Mobile: flat grid, same modules.
+// Reduced motion: no tilt, no lift animation.
+
+import { getLibraries, LIBRARY_ICONS, type LibraryEntry } from "../../data/libraries.ts";
+import { t } from "../../data/ui-strings.ts";
+import type { Locale } from "../../lib/i18n.ts";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const entries: LibraryEntry[] = getLibraries(locale);
+---
+
+<div class="cabinet" data-cabinet aria-label={t(locale, "cabinet.aria")}>
+  <div class="cabinet__stage">
+    <div class="cabinet__side" aria-hidden="true"></div>
+    <div class="cabinet__top" aria-hidden="true"></div>
+    <div class="cabinet__body">
+      <div class="cabinet__head">
+        <p class="cabinet__titleline">
+          <span class="cabinet__name">{t(locale, "cabinet.label")}</span>
+          <span class="cabinet__hint">{t(locale, "cabinet.hint")}</span>
+        </p>
+        <button
+          class="cabinet__sound"
+          type="button"
+          aria-pressed="false"
+          data-sound-toggle
+          data-on-label={t(locale, "cabinet.soundOn")}
+        >
+          {t(locale, "cabinet.soundOff")}
+        </button>
+      </div>
+      <ul class="cabinet__grid">
+        {entries.map((entry) => (
+          <li class="slot">
+            {entry.href ? (
+              <a
+                class={`drawer drawer--${entry.icon}`}
+                href={entry.href}
+                target={entry.external ? "_blank" : undefined}
+                rel={entry.external ? "noopener noreferrer" : undefined}
+                aria-label={`${entry.label} — ${entry.desc}${
+                  entry.external ? ` (${t(locale, "cabinet.external")})` : ""
+                }`}
+                data-drawer
+              >
+                <span class="drawer__head">
+                  <span class="drawer__label">{entry.label}</span>
+                  <span class="drawer__icon" set:html={LIBRARY_ICONS[entry.icon]} />
+                </span>
+                <span class="drawer__sub">{entry.desc}</span>
+                <span class="drawer__visual" aria-hidden="true"></span>
+              </a>
+            ) : (
+              <div class={`drawer drawer--${entry.icon} drawer--locked`} aria-disabled="true">
+                <span class="drawer__head">
+                  <span class="drawer__label">{entry.label}</span>
+                  <span class="drawer__icon" set:html={LIBRARY_ICONS[entry.icon]} />
+                </span>
+                <span class="drawer__sub">{entry.desc}</span>
+                <span class="drawer__tag drawer__tag--soon">
+                  {t(locale, "cabinet.comingSoon")}
+                </span>
+                <span class="drawer__visual" aria-hidden="true"></span>
+              </div>
+            )}
+          </li>
+        ))}
+        <li class="slot slot--decor" aria-hidden="true">
+          <span class="drawer drawer--decor">
+            <span class="drawer__decorlines"></span>
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="cabinet__floor" aria-hidden="true"></div>
+</div>
+
+<style>
+  .cabinet {
+    --tilt-rx: 2deg;
+    --tilt-ry: -7deg;
+    position: relative;
+    max-width: 27rem;
+    margin-inline: auto;
+    font-family: var(--font-body);
+  }
+
+  .cabinet__stage {
+    position: relative;
+    perspective: 1500px;
+  }
+
+  /* Cabinet shell — light panel body, ink border, hard shadow. */
+  .cabinet__body {
+    position: relative;
+    z-index: 2;
+    padding: 0.8rem 0.8rem 1.1rem;
+    background:
+      radial-gradient(120% 60% at 18% 0%, rgb(255 255 255 / 85%), transparent 55%),
+      linear-gradient(180deg, #fafbfc, var(--obj-panel));
+    border: var(--obj-line);
+    border-radius: 6px;
+    box-shadow: var(--obj-shadow);
+    transform: rotateX(var(--rx, var(--tilt-rx))) rotateY(var(--ry, var(--tilt-ry)));
+    transform-style: preserve-3d;
+    transition: transform var(--mot-tilt) var(--mot-ease-out);
+  }
+  /* Two small feet under the cabinet. */
+  .cabinet__body::before,
+  .cabinet__body::after {
+    content: "";
+    position: absolute;
+    bottom: -0.62rem;
+    width: 1.5rem;
+    height: 0.62rem;
+    background: var(--obj-black);
+    border-radius: 0 0 3px 3px;
+  }
+  .cabinet__body::before { left: 1.1rem; }
+  .cabinet__body::after { right: 1.1rem; }
+
+  /* Visible side plane — recedes thanks to the resting rotation. */
+  .cabinet__side {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 30px;
+    background: linear-gradient(180deg, #d3d6dc, #b9bdc6);
+    border: var(--obj-line);
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    transform-origin: right center;
+    transform: rotateY(-88deg);
+    z-index: 1;
+    pointer-events: none;
+  }
+  /* Top edge — a thin lit plane so the cabinet reads as a volume. */
+  .cabinet__top {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 18px;
+    background: linear-gradient(90deg, #ffffff, #dfe2e8);
+    border: var(--obj-line);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    transform-origin: center top;
+    transform: rotateX(86deg);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .cabinet__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin: 0 0 0.7rem;
+    padding: 0 0.15rem 0.55rem;
+    border-bottom: var(--obj-line-thin);
+  }
+  .cabinet__titleline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem 0.7rem;
+    margin: 0;
+  }
+  .cabinet__name {
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--obj-ink);
+  }
+  .cabinet__hint {
+    font-size: 0.66rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .cabinet__sound {
+    flex: none;
+    padding: 0.18rem 0.5rem;
+    background: transparent;
+    border: var(--obj-line-thin);
+    border-radius: 999px;
+    color: var(--ink-soft);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+  .cabinet__sound[aria-pressed="true"] {
+    background: var(--obj-yellow);
+    border-color: var(--obj-ink);
+    color: var(--obj-ink);
+  }
+
+  .cabinet__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .slot {
+    position: relative;
+    min-width: 0;
+  }
+
+  /* A cabinet module — one physical tile in the grid. */
+  .drawer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    height: 100%;
+    min-height: 6.4rem;
+    padding: 0.6rem 0.65rem 0.7rem;
+    background: #fff;
+    border: var(--obj-line-thin);
+    border-radius: 4px;
+    color: var(--obj-ink);
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 3px 4px 0 rgb(5 10 40 / 18%);
+    transform-style: preserve-3d;
+    transition:
+      transform var(--mot-fast) var(--mot-ease),
+      box-shadow var(--mot-fast) ease,
+      opacity var(--mot-fast) ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .drawer__label {
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .drawer__icon {
+    display: inline-flex;
+    flex: none;
+    width: 1.05rem;
+    height: 1.05rem;
+    color: currentColor;
+    opacity: 0.8;
+  }
+  .drawer__icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+  .drawer__sub {
+    font-size: 0.68rem;
+    line-height: 1.4;
+    color: var(--ink-soft);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Per-module material + visual. */
+  .drawer__visual {
+    margin-top: auto;
+    display: block;
+    height: 1.5rem;
+    border-radius: 2px;
+  }
+  .drawer--topics .drawer__visual {
+    background-image: radial-gradient(rgb(15 17 21 / 55%) 1px, transparent 1.4px);
+    background-size: 8px 8px;
+    border: 1px solid rgb(15 17 21 / 25%);
+  }
+  .drawer--scripts .drawer__visual {
+    background:
+      repeating-linear-gradient(180deg, rgb(15 17 21 / 55%) 0 1px, transparent 1px 4px),
+      linear-gradient(90deg, var(--obj-red) 0 22%, transparent 22%);
+    background-blend-mode: normal;
+    border: 1px solid rgb(15 17 21 / 25%);
+  }
+  .drawer--checklists {
+    background: var(--obj-yellow);
+  }
+  .drawer--checklists .drawer__sub {
+    color: rgb(27 20 5 / 78%);
+  }
+  .drawer--checklists .drawer__visual {
+    height: 0.85rem;
+    background: var(--obj-black);
+    border-radius: 999px;
+    align-self: center;
+    width: 46%;
+  }
+  .drawer--discord {
+    background: var(--obj-lavender);
+  }
+  .drawer--tiktok {
+    background: var(--obj-black);
+    color: #f2f4f8;
+  }
+  .drawer--tiktok .drawer__sub {
+    color: rgb(242 244 248 / 66%);
+  }
+  .drawer--tiktok .drawer__visual {
+    border-color: rgb(255 255 255 / 30%);
+  }
+
+  /* Decorative sixth cell — paper stack, pure object language. */
+  .drawer--decor {
+    cursor: default;
+    box-shadow: 3px 4px 0 rgb(5 10 40 / 18%);
+  }
+  .drawer__decorlines {
+    display: block;
+    height: 100%;
+    min-height: 4.6rem;
+    background:
+      linear-gradient(90deg, transparent 0 78%, var(--obj-red) 78% 79%, transparent 79%),
+      repeating-linear-gradient(180deg, rgb(15 17 21 / 45%) 0 1.5px, transparent 1.5px 6px);
+    border: 1px solid rgb(15 17 21 / 25%);
+    border-radius: 2px;
+  }
+
+  .drawer__tag {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.55rem;
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .drawer__tag--soon {
+    color: var(--coral);
+  }
+  .drawer--tiktok .drawer__tag--soon {
+    color: var(--obj-yellow);
+  }
+
+  /* Locked modules: honest state, no fake link, no lift. The tag takes
+     the icon's corner so the two never overlap. */
+  .drawer--locked {
+    cursor: default;
+  }
+  .drawer--locked .drawer__icon {
+    display: none;
+  }
+  .drawer--locked .drawer__tag {
+    position: static;
+    margin-left: auto;
+  }
+
+  /* ── Hover / focus: module lifts toward the viewer; the rest of
+     the grid quietly steps back so the hovered module leads. ── */
+  a.drawer:hover,
+  a.drawer:focus-visible {
+    transform: translate(-2px, -4px);
+    box-shadow: 6px 8px 0 rgb(5 10 40 / 32%);
+    z-index: 5;
+  }
+  .cabinet__grid:has(a.drawer:hover) a.drawer:not(:hover) {
+    opacity: 0.55;
+  }
+  a.drawer:active {
+    transform: translate(-1px, -1px) scale(0.98);
+    box-shadow: 3px 4px 0 rgb(5 10 40 / 24%);
+  }
+  a.drawer:focus-visible {
+    outline: 3px solid var(--obj-yellow);
+    outline-offset: 3px;
+  }
+  /* Click: short pop-out, navigation follows after the motion. */
+  a.drawer.is-open {
+    transform: translateZ(var(--depth-pop)) scale(1.02);
+    box-shadow: 10px 12px 0 rgb(5 10 40 / 40%);
+    transition:
+      transform var(--mot-open) var(--mot-ease),
+      box-shadow var(--mot-open) ease,
+      opacity var(--mot-fast) ease;
+  }
+
+  /* Floor shadow grounds the object. */
+  .cabinet__floor {
+    height: 1.9rem;
+    margin-top: 0.55rem;
+    background: radial-gradient(50% 100% at 50% 0%, rgb(3 6 20 / 55%), transparent 72%);
+    filter: blur(3px);
+  }
+
+  /* ── Mobile: flat grid, same modules, no tilt ── */
+  @media (max-width: 47.99rem) {
+    .cabinet__stage {
+      perspective: none;
+    }
+    .cabinet__side,
+    .cabinet__top {
+      display: none;
+    }
+    .cabinet__body {
+      transform: none;
+      transition: none;
+      box-shadow: 5px 6px 0 rgb(5 10 40 / 38%);
+    }
+    a.drawer:hover,
+    a.drawer:focus-visible,
+    a.drawer.is-open {
+      transform: none;
+    }
+    .cabinet__grid:has(a.drawer:hover) a.drawer:not(:hover) {
+      opacity: 1;
+    }
+    a.drawer:active {
+      transform: scale(0.985);
+    }
+  }
+
+  /* ── Reduced motion: everything readable, nothing moves ── */
+  @media (prefers-reduced-motion: reduce) {
+    .cabinet__body,
+    .drawer {
+      transition: none !important;
+    }
+    .cabinet__body {
+      transform: none;
+    }
+    a.drawer:hover,
+    a.drawer:focus-visible,
+    a.drawer.is-open {
+      transform: none;
+    }
+    .cabinet__grid:has(a.drawer:hover) a.drawer:not(:hover) {
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  // Pointer tilt (fine pointers only) + click pop-then-navigate +
+  // optional micro sounds. Everything degrades gracefully: without JS
+  // the drawers are plain links; without sound toggled nothing plays.
+  import { soundEnabled, toggleSound, playTick, playOpen } from "../../scripts/objectSound.ts";
+
+  const cabinet = document.querySelector<HTMLElement>("[data-cabinet]");
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ── Optional sound toggle ──
+  const soundBtn = cabinet?.querySelector<HTMLButtonElement>("[data-sound-toggle]");
+  if (soundBtn) {
+    const offLabel = soundBtn.textContent ?? "Sound off";
+    const onLabel = soundBtn.dataset.onLabel ?? "Sound on";
+    soundBtn.dataset.offLabel = offLabel;
+    soundBtn.addEventListener("click", () => {
+      const on = toggleSound();
+      soundBtn.setAttribute("aria-pressed", String(on));
+      soundBtn.textContent = on ? onLabel : (soundBtn.dataset.offLabel ?? offLabel);
+      if (on) playTick();
+    });
+  }
+
+  // ── Drawer micro-interactions ──
+  const drawers = cabinet?.querySelectorAll<HTMLAnchorElement>("[data-drawer]") ?? [];
+  drawers.forEach((drawer) => {
+    if (finePointer && !reduceMotion) {
+      drawer.addEventListener("pointerenter", () => {
+        if (soundEnabled()) playTick();
+      });
+    }
+    drawer.addEventListener("click", (event) => {
+      // Never hijack new-tab / modified clicks.
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+      if (drawer.target === "_blank") return;
+      event.preventDefault();
+      const href = drawer.href;
+      if (soundEnabled()) playOpen();
+      drawer.classList.add("is-open");
+      window.setTimeout(() => {
+        window.location.assign(href);
+      }, reduceMotion ? 0 : 300);
+    });
+  });
+
+  // ── Whole-cabinet tilt ──
+  if (cabinet && finePointer && !reduceMotion) {
+    const REST_RY = -7;
+    const REST_RX = 2;
+    let raf = 0;
+
+    cabinet.addEventListener("pointermove", (event) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const rect = cabinet.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        cabinet.style.setProperty("--ry", `${(REST_RY + x * -3.5).toFixed(2)}deg`);
+        cabinet.style.setProperty("--rx", `${(REST_RX + y * 2.2).toFixed(2)}deg`);
+      });
+    });
+
+    cabinet.addEventListener("pointerleave", () => {
+      cabinet.style.setProperty("--ry", `${REST_RY}deg`);
+      cabinet.style.setProperty("--rx", `${REST_RX}deg`);
+    });
+  }
+</script>

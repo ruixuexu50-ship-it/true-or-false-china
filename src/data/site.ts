@@ -7,7 +7,27 @@ export const siteIdentity = {
 } satisfies SiteIdentity;
 
 export const siteDescription =
-  "We unpack the hidden allocation of scarce resources, decode how systems really work—and show what it means for your wallet.";
+  "Real questions about how China actually works. We check the evidence, explain the mechanism, mark the boundary—and follow where it lands.";
+
+// ─────────────────────────────────────────────────────────────
+// External community links (CURRENT ASSUMPTION, owner-provided).
+//
+// The only place to add the real Discord invite / TikTok profile
+// URLs. While a value is null the entry renders as an honest
+// "coming soon" tile — it never gets a fake href. When the owner
+// fills these in, every surface (header nav, knowledge cabinet,
+// library grid, community section) picks the link up at once.
+// ─────────────────────────────────────────────────────────────
+
+export const externalLinks: {
+  /** Discord invite URL, or null until the owner provides one. */
+  discordUrl: string | null;
+  /** TikTok profile URL, or null until the owner provides one. */
+  tiktokUrl: string | null;
+} = {
+  discordUrl: null,
+  tiktokUrl: null,
+};
 
 // ─────────────────────────────────────────────────────────────
 // Editorial configuration (CURRENT ASSUMPTION, explicit & reviewable).

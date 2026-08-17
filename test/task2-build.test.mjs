@@ -36,19 +36,23 @@ test("local build exposes the complete review slice and keeps public release blo
   }
 
   assert.match(pages.home, /True or False China/);
-  assert.match(pages.home, /CURRENT TOPIC COVER|当前主题封面/i);
-  assert.match(pages.home, /Open topic|打开主题/);
-  assert.match(pages.home, /Explore all routes|探索所有路线/);
-  assert.match(pages.home, /data-leo-object/);
-  assert.match(pages.home, /data-desk-root/);
-  assert.match(pages.home, /data-desk-object="news"/);
-  assert.match(pages.home, /data-desk-object="env"/);
-  assert.match(pages.home, /data-desk-object="clap"/);
-  assert.match(pages.home, /Essays &amp; research|随笔与研究/);
-  assert.match(pages.home, /PRACTICAL GUIDES — IN PROGRESS|实用指南/);
-  assert.match(pages.home, /VIDEO &amp; SCRIPTS — IN PROGRESS|视频与脚本/);
-  // The owner-review drawer still mentions the old Chinese instrument name; we only
-  // care that the main homepage surface no longer uses the old structure.
+  assert.match(pages.home, /Start with what matters\.|从真正重要的问题开始。/);
+  assert.match(pages.home, /data-cabinet/);
+  assert.match(pages.home, /data-drawer/);
+  assert.match(pages.home, /Explore topics|探索问题/);
+  assert.match(pages.home, /How this works|我们怎么研究/);
+  assert.match(
+    pages.home,
+    /Question\s*→\s*Evidence\s*→\s*Mechanism\s*→\s*Boundary\s*→\s*Impact|问题\s*→\s*证据\s*→\s*机制\s*→\s*边界\s*→\s*影响/,
+  );
+  // The five libraries all appear on the homepage with real links.
+  assert.match(pages.home, /href="\/explore\/"/);
+  assert.match(pages.home, /href="\/transcripts\/"/);
+  assert.match(pages.home, /href="\/checklists\/"/);
+  assert.match(pages.home, /Discord/);
+  assert.match(pages.home, /TikTok/);
+  // Entries without a real URL stay honestly locked, never fake-linked.
+  assert.match(pages.home, /Coming soon|待接入/);
   assert.doesNotMatch(pages.home, /data-brand-object/);
   assert.doesNotMatch(pages.home, /data-route-block/);
   assert.doesNotMatch(pages.home, /\/images\/qr-route-working\.png/);

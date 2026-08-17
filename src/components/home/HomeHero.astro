@@ -1,0 +1,280 @@
+---
+// HomeHero — the homepage's first frame.
+//
+// Left: brand kicker, the core proposition ("Start with what
+// matters."), a calm deck, the method strip, and the two CTAs.
+// Right: the Knowledge Cabinet. Editorial composition on a deep
+// navy stage — cobalt stays an anchor color, not a background.
+
+import { t, format } from "../../data/ui-strings.ts";
+import type { Locale } from "../../lib/i18n.ts";
+import KnowledgeCabinet from "./KnowledgeCabinet.astro";
+
+interface Props {
+  locale: Locale;
+  /** Number of Topic pages the current build mode actually emits. */
+  releasedCount: number;
+  /** Latest real review date across released Topics (YYYY-MM-DD). */
+  latestReviewDate: string | null;
+}
+
+const { locale, releasedCount, latestReviewDate } = Astro.props;
+const exploreUrl = locale === "zh" ? "/zh/explore/" : "/explore/";
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__inner">
+    <div class="hero__copy">
+      <p class="hero__kicker">{t(locale, "home.kicker")}</p>
+      <h1 id="hero-title" class="hero__title">{t(locale, "home.headline")}</h1>
+      <p class="hero__deck">{t(locale, "home.deck")}</p>
+
+      <p class="hero__method">
+        <span class="hero__method-label">{t(locale, "method.kicker")}</span>
+        {t(locale, "home.methodStrip").replace(/ → /g, "\u00A0→ ")}
+      </p>
+
+      <div class="hero__actions">
+        <a class="hero__cta hero__cta--primary" href={exploreUrl}>
+          {t(locale, "home.ctaPrimary")} <span aria-hidden="true">→</span>
+        </a>
+        <a class="hero__cta hero__cta--secondary" href="#how-this-works">
+          {t(locale, "home.ctaSecondary")} <span aria-hidden="true">↓</span>
+        </a>
+      </div>
+
+      <p class="hero__meta">
+        {latestReviewDate && (
+          <span>{t(locale, "home.metaUpdated")} {latestReviewDate}</span>
+        )}
+        {releasedCount > 0 && (
+          <span aria-hidden="true"> · </span>
+        )}
+        {releasedCount > 0 && <span>{format(t(locale, "home.metaTopics"), { n: releasedCount })}</span>}
+      </p>
+    </div>
+
+    <div class="hero__cabinet">
+      <svg class="hero__spark hero__spark--1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z"/></svg>
+      <svg class="hero__spark hero__spark--2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z"/></svg>
+      <svg class="hero__spark hero__spark--3" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z"/></svg>
+      <KnowledgeCabinet locale={locale} />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(54rem 30rem at 82% 10%, rgb(255 255 255 / 12%), transparent 60%),
+      radial-gradient(40rem 24rem at 4% 106%, rgb(4 20 90 / 35%), transparent 66%),
+      linear-gradient(158deg, #1a49ff 0%, var(--cobalt) 52%, var(--cobalt) 100%);
+    color: #f2f4f8;
+    font-family: var(--font-body);
+  }
+  /* Faint blueprint dot grid for graphic texture. */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgb(255 255 255 / 9%) 1px, transparent 1.4px);
+    background-size: 26px 26px;
+    pointer-events: none;
+  }
+
+  .hero__inner {
+    position: relative;
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 4.5rem);
+    align-items: center;
+    width: min(80rem, 100%);
+    margin-inline: auto;
+    padding: clamp(3rem, 7vw, 5.5rem) clamp(1.2rem, 4vw, 3rem) clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .hero__copy {
+    min-width: 0;
+  }
+
+  .hero__kicker {
+    margin: 0 0 1.4rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgb(242 244 248 / 72%);
+  }
+  .hero__kicker::after {
+    content: "";
+    display: block;
+    width: 3.2rem;
+    height: 3px;
+    margin-top: 0.9rem;
+    background: var(--yellow);
+    border-radius: 2px;
+  }
+
+  .hero__title {
+    margin: 0;
+    max-width: 14ch;
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4.6rem);
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  :lang(en) .hero__title {
+    text-transform: uppercase;
+  }
+  :lang(zh) .hero__title {
+    max-width: 11ch;
+    line-height: 1.16;
+    letter-spacing: 0.01em;
+  }
+
+  .hero__deck {
+    max-width: 32rem;
+    margin: 1.4rem 0 0;
+    font-size: clamp(1rem, 1.6vw, 1.12rem);
+    line-height: 1.65;
+    color: rgb(242 244 248 / 84%);
+  }
+
+  .hero__method {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.8rem;
+    max-width: 34rem;
+    margin: 1.6rem 0 0;
+    padding-block: 0.8rem;
+    border-block: 1px solid rgb(242 244 248 / 22%);
+    font-size: 0.76rem;
+    letter-spacing: 0.05em;
+    color: rgb(242 244 248 / 72%);
+  }
+  .hero__method-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--yellow);
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: center;
+    margin-top: 1.8rem;
+  }
+
+  .hero__cta--primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.4rem;
+    background: var(--obj-black);
+    border: 2px solid var(--obj-yellow);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 5px 6px 0 rgb(5 10 40 / 38%);
+    transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+  .hero__cta--primary:hover,
+  .hero__cta--primary:focus-visible {
+    background: #232733;
+    transform: translateY(-2px);
+    box-shadow: 8px 10px 0 rgb(5 10 40 / 48%);
+  }
+
+  .hero__cta--secondary {
+    color: rgb(242 244 248 / 88%);
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgb(242 244 248 / 38%);
+    text-underline-offset: 0.28em;
+  }
+  .hero__cta--secondary:hover,
+  .hero__cta--secondary:focus-visible {
+    color: #fff;
+    text-decoration-color: var(--yellow);
+  }
+
+  .hero__meta {
+    margin: 1.7rem 0 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(242 244 248 / 50%);
+  }
+
+  .hero__cabinet {
+    position: relative;
+    min-width: 0;
+  }
+
+  /* Floating yellow sparks — small graphic accents around the cabinet. */
+  .hero__spark {
+    position: absolute;
+    z-index: 3;
+    fill: var(--yellow);
+    filter: drop-shadow(0 2px 6px rgb(255 196 0 / 45%));
+    pointer-events: none;
+  }
+  .hero__spark--1 {
+    width: 1.6rem;
+    top: -1.2rem;
+    right: 12%;
+  }
+  .hero__spark--2 {
+    width: 1rem;
+    top: 34%;
+    right: -0.8rem;
+    opacity: 0.85;
+  }
+  .hero__spark--3 {
+    width: 0.75rem;
+    bottom: 8%;
+    left: -0.6rem;
+    opacity: 0.7;
+  }
+
+  @media (min-width: 62rem) {
+    .hero__inner {
+      grid-template-columns: minmax(0, 1.05fr) minmax(24rem, 0.95fr);
+    }
+  }
+
+  @media (max-width: 61.99rem) {
+    .hero__cabinet {
+      max-width: 26rem;
+      margin-inline: auto;
+    }
+    .hero__spark--2 {
+      right: 0.2rem;
+    }
+    .hero__spark--3 {
+      left: 0.2rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__cta--primary,
+    .hero__cta--secondary {
+      transition: none;
+    }
+    .hero__cta--primary:hover,
+    .hero__cta--primary:focus-visible {
+      transform: none;
+    }
+  }
+</style>

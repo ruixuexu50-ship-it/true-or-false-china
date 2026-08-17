@@ -5,144 +5,128 @@ import test from "node:test";
 const url = (path) => new URL(path, import.meta.url);
 const read = (path) => readFileSync(url(path), "utf8");
 
-test("home first frame shows the main question, setup, entries, and the living evidence object", () => {
-  const componentPath = url("../src/components/home/QuestionSpaceHome.astro");
-  assert.equal(existsSync(componentPath), true, "QuestionSpaceHome must exist");
-
-  const page = read("../src/pages/index.astro");
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
+test("home hero states the proposition, method, and both CTAs", () => {
+  const hero = read("../src/components/home/HomeHero.astro");
   const uiStrings = read("../src/data/ui-strings.ts");
 
-  assert.match(page, /import QuestionSpaceHome/);
-  assert.match(page, /<QuestionSpaceHome coverTopic=\{coverTopic\}/);
-  assert.match(component, /home\.titleLine1/);
-  assert.match(component, /home\.titleLine2/);
-  assert.match(component, /home\.deck/);
-  assert.match(component, /home\.openTopic/);
-  assert.match(component, /home\.route\.exploreAll/);
-  assert.match(component, /home\.block\.question\.label/);
-  assert.match(component, /\/ 01/);
-  assert.match(component, /LivingEvidenceObject/);
-  assert.match(component, /home\.typeCaseLabel/);
-  assert.match(uiStrings, /"home\.typeCaseLabel": "CURRENT TOPIC COVER"/);
-  assert.match(uiStrings, /"home\.typeCaseLabel": "当前主题封面"/);
+  assert.match(hero, /home\.kicker/);
+  assert.match(hero, /home\.headline/);
+  assert.match(hero, /home\.deck/);
+  assert.match(hero, /home\.methodStrip/);
+  assert.match(hero, /home\.ctaPrimary/);
+  assert.match(hero, /home\.ctaSecondary/);
+  assert.match(hero, /KnowledgeCabinet/);
+  // The headline proposition is the calm editorial one, not the old
+  // "sole truth" campaign line.
+  assert.match(uiStrings, /"home\.headline": "Start with what matters\.",/);
+  assert.match(uiStrings, /"home\.headline": "从真正重要的问题开始。",/);
+  assert.doesNotMatch(hero, /data-emergence-step|--scroll-progress|IntersectionObserver/);
 });
 
-test("home uses real current topic content for the cover without inventing facts", () => {
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
+test("the hero shows only real metadata — no invented numbers", () => {
+  const page = read("../src/pages/index.astro");
+  const hero = read("../src/components/home/HomeHero.astro");
 
-  assert.match(component, /coverTopic\.category/);
-  assert.match(component, /coverTopic\.openingQuestion/);
-  assert.match(component, /coverTopic\.deck/);
-  assert.doesNotMatch(component, /qr-route-working|foreign card|traveler-card/i);
+  // releasedCount / latestReviewDate are derived from the real release
+  // plan and Topic records upstream, never hardcoded in the hero.
+  assert.match(page, /getReleasePlan\("en"\)/);
+  assert.match(page, /releasedTopics\.length/);
+  assert.match(page, /lastReviewed/);
+  assert.doesNotMatch(hero, /\b\d+\s*(members|users|subscribers|sources)\b/i);
 });
 
-test("home does not scroll-gate substantive content", () => {
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
+test("the knowledge cabinet renders five real drawers with real semantics", () => {
+  const cabinet = read("../src/components/home/KnowledgeCabinet.astro");
+  const libraries = read("../src/data/libraries.ts");
 
-  assert.doesNotMatch(component, /data-emergence-step/);
-  assert.doesNotMatch(component, /--scroll-progress/);
-  assert.doesNotMatch(component, /case-intake|question-intake|rail-response/);
-  assert.doesNotMatch(component, /IntersectionObserver/);
-  assert.doesNotMatch(component, /data-brand-object/);
-  assert.doesNotMatch(component, /data-route-block/);
-  assert.doesNotMatch(component, /Knowledge Type Case|知识活字箱/i);
-  assert.doesNotMatch(component, /Scroll to assemble|向下滚动，拼出/i);
+  assert.match(cabinet, /data-cabinet/);
+  assert.match(cabinet, /data-drawer/);
+  assert.match(cabinet, /getLibraries\(locale\)/);
+  // 3D is pure CSS transforms + a few lines of pointer JS — no engine.
+  assert.match(cabinet, /transform-style:\s*preserve-3d/);
+  assert.match(cabinet, /perspective:\s*1500px/);
+  assert.doesNotMatch(cabinet, /import .*three|new THREE|<canvas/);
+  // Drawer entries come from the shared single source of truth.
+  assert.match(libraries, /getLibraries/);
+  assert.match(libraries, /externalLinks\.discordUrl/);
+  assert.match(libraries, /externalLinks\.tiktokUrl/);
 });
 
-test("the living evidence object invites play without blocking content", () => {
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
-  const leo = read("../src/components/experiences/LivingEvidenceObject.astro");
+test("entries without a real URL render locked, never fake-linked", () => {
+  const cabinet = read("../src/components/home/KnowledgeCabinet.astro");
+  const sections = read("../src/components/home/HomeSections.astro");
 
-  assert.match(component, /LivingEvidenceObject/);
-  assert.match(leo, /data-leo-object/);
-  assert.match(leo, /cursor:\s*grab/);
-  assert.match(leo, /tabindex="0"/);
-  assert.match(leo, /aria-label/);
-  assert.match(leo, /prefers-reduced-motion/);
-  assert.doesNotMatch(leo, /WebGL|three\.js|<canvas/i);
+  assert.match(cabinet, /drawer--locked/);
+  assert.match(cabinet, /cabinet\.comingSoon/);
+  assert.match(cabinet, /aria-disabled="true"/);
+  assert.match(sections, /lib-entry__link--soon/);
+  // href only renders when entry.href exists
+  assert.match(cabinet, /entry\.href \?/);
 });
 
-test("the cover exposes at most one natural hotspot with real topic detail", () => {
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
-  const leo = read("../src/components/experiences/LivingEvidenceObject.astro");
+test("the cabinet is keyboard-operable and respects reduced motion", () => {
+  const cabinet = read("../src/components/home/KnowledgeCabinet.astro");
 
-  assert.match(leo, /data-leo-hotspot/);
-  assert.match(component, /coverTopic\.deck/);
-  assert.match(component, /hotspots:\s*\[/);
-  const hotspotCount = (component.match(/data-leo-hotspot/g) ?? []).length;
-  assert.ok(hotspotCount >= 0 && hotspotCount <= 1, `expected 0–1 hotspots in homepage config, got ${hotspotCount}`);
+  // Drawers are real links → keyboard operable natively; focus styling
+  // must be visible.
+  assert.match(cabinet, /:focus-visible/);
+  assert.match(cabinet, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(cabinet, /prefers-reduced-motion/); // pointer tilt gated in JS
+  // Mobile fallback: no forced perspective, descriptions inline.
+  assert.match(cabinet, /@media \(max-width: 47\.99rem\)/);
+  assert.match(cabinet, /perspective:\s*none/);
 });
 
-test("home supports reduced motion while keeping content intact", () => {
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
+test("the homepage sections follow the browsing path without fake stats", () => {
+  const sections = read("../src/components/home/HomeSections.astro");
 
-  assert.match(component, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.doesNotMatch(component, /animation-(?:iteration-count):\s*infinite|\binfinite\b/);
+  assert.match(sections, /now\.kicker/); // currently investigating
+  assert.match(sections, /lib\.kicker/); // five libraries
+  assert.match(sections, /method\.kicker/); // method & trust
+  assert.match(sections, /featured\.kicker/); // read next
+  assert.match(sections, /community\.kicker/); // community
+  // Trust points are checkable practices, not invented metrics.
+  assert.match(sections, /method\.trust\.1/);
+  assert.doesNotMatch(sections, /\b\d+[km]?\+?\s*(readers|members|views|followers)\b/i);
 });
 
-test("mobile keeps the object as a bounded, non-dominating block", () => {
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
-  const leo = read("../src/components/experiences/LivingEvidenceObject.astro");
+test("the currently-investigating section uses real Topic data", () => {
+  const sections = read("../src/components/home/HomeSections.astro");
+  const page = read("../src/pages/index.astro");
 
-  assert.match(component, /@media \(max-width:/);
-  assert.match(component, /\.cover-stage\s*\{[\s\S]*max-width:/);
-  assert.match(leo, /touch-action:\s*pan-y/);
-  assert.match(leo, /@media \(max-width: 38rem\)/);
+  assert.match(sections, /investigateTopic\.openingQuestion/);
+  assert.match(sections, /investigateTopic\.lastReviewed/);
+  assert.match(sections, /investigateHref/);
+  // Topic still resolved from explicit config, never array position.
+  assert.match(page, /getTopicById\(homeCoverTopicId, "en"\)/);
 });
 
-test("home links resolve through the locale-aware prefix", () => {
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
+test("the featured section only links Topics the build actually emits", () => {
+  const page = read("../src/pages/index.astro");
+  const sections = read("../src/components/home/HomeSections.astro");
 
-  assert.match(component, /hrefPrefix/);
-  assert.match(component, /\$\{hrefPrefix\}\/topics\/\$\{coverTopic\.slug\}\//);
-  assert.match(component, /\$\{hrefPrefix\}\/explore\//);
+  assert.match(page, /releasedSlugs\.includes/);
+  assert.match(sections, /releasedTopics\.length > 0/);
+  assert.match(sections, /featured\.zhPending/); // honest zh fallback
 });
 
-test("the playable desk renders three real-semantic objects with distinct verbs", () => {
-  const component = read("../src/components/home/QuestionSpaceHome.astro");
-  const desk = read("../src/components/home/PlayableDesk.astro");
-
-  assert.match(component, /<PlayableDesk locale=\{locale\} readUrl=\{exploreUrl\} \/>/);
-  assert.match(desk, /data-desk-object="news"/);
-  assert.match(desk, /data-desk-object="env"/);
-  assert.match(desk, /data-desk-object="clap"/);
-  // distinct verbs, one shared world
-  assert.match(desk, /desk\.read\.verb/);
-  assert.match(desk, /desk\.do\.verb/);
-  assert.match(desk, /desk\.watch\.verb/);
-  assert.match(desk, /is-unfold/);
-  assert.match(desk, /is-open/);
-  assert.match(desk, /is-clapped/);
-  assert.match(desk, /--obj-shadow/);
-  assert.match(desk, /--obj-ink/);
-});
-
-test("the playable desk keeps text semantics and honest prototype states", () => {
-  const desk = read("../src/components/home/PlayableDesk.astro");
-
-  // every object carries text semantics nearby
-  assert.match(desk, /desk\.read\.subtitle/);
-  assert.match(desk, /desk\.do\.subtitle/);
-  assert.match(desk, /desk\.watch\.subtitle/);
-  // READ links to the real collection; DO/WATCH are honest prototypes
-  assert.match(desk, /href=\{readUrl\}/);
-  assert.match(desk, /desk\.do\.inProgress/);
-  assert.match(desk, /desk\.watch\.inProgress/);
-});
-
-test("the playable desk is enhancement, not a navigation dependency", () => {
-  const desk = read("../src/components/home/PlayableDesk.astro");
-
-  // no scroll-gating / observers / WebGL
-  assert.doesNotMatch(desk, /data-emergence-step|--scroll-progress|IntersectionObserver/);
-  // no actual 3D engine usage (the header comment mentioning "WebGL" is prose, not code)
-  assert.doesNotMatch(desk, /import .*three|new THREE|<canvas/);
-  // attention budget: idle life only on the newspaper
-  assert.match(desk, /desk-object--news\.is-idle/);
-  assert.match(desk, /@media \(prefers-reduced-motion: reduce\)/);
-  // reduced motion disables idle + keeps nav
-  assert.match(desk, /animation:\s*none/);
+test("library index routes exist for both libraries and both locales", () => {
+  for (const path of [
+    "../src/pages/transcripts/index.astro",
+    "../src/pages/checklists/index.astro",
+    "../src/pages/zh/transcripts/index.astro",
+    "../src/pages/zh/checklists/index.astro",
+  ]) {
+    assert.equal(existsSync(url(path)), true, `${path} must exist`);
+  }
+  const transcripts = read("../src/pages/transcripts/index.astro");
+  const checklists = read("../src/pages/zh/checklists/index.astro");
+  assert.match(transcripts, /variant="transcripts"/);
+  assert.match(transcripts, /robots=\{isPublicRelease \? "index,follow" : "noindex,nofollow"\}/);
+  assert.match(checklists, /variant="checklists"/);
+  // The transcripts page is honest about having no scripts yet.
+  const libraryIndex = read("../src/components/library/LibraryIndex.astro");
+  assert.match(libraryIndex, /ts\.empty/);
 });
 
 test("the accepted QR homepage survives only as a local noindex archive", () => {

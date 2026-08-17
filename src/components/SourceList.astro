@@ -98,28 +98,50 @@ const { topic, locale } = Astro.props;
   }
 
   .source-list {
+    display: grid;
+    gap: 0.8rem;
     max-width: 76rem;
     margin: 0;
     padding: 0;
-    border-top: var(--line);
     list-style: none;
   }
 
-  .source-list li {
-    border-bottom: var(--line);
-  }
-
+  /* Each source is an evidence clipping — same object language as
+     the homepage cabinet: light panel, ink edge, hard shadow. */
   .source-list a {
     display: grid;
     grid-template-columns: 3rem 1fr auto;
     gap: 0.8rem;
     align-items: start;
-    padding: 1.15rem 0;
+    padding: 1rem 1.1rem;
+    background: var(--obj-panel);
+    border: var(--obj-line-thin);
+    border-radius: 4px;
+    box-shadow: 4px 5px 0 rgb(15 17 21 / 16%);
     text-decoration: none;
+    transition:
+      transform var(--mot-fast) var(--mot-ease),
+      box-shadow var(--mot-fast) ease;
+  }
+
+  .source-list a:hover,
+  .source-list a:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 6px 8px 0 rgb(15 17 21 / 24%);
   }
 
   .source-list a:hover .source-main strong {
     text-decoration: underline;
+  }
+
+  .source-number {
+    display: inline-block;
+    padding: 0.2rem 0.45rem;
+    background: var(--obj-yellow);
+    border: 1px solid var(--obj-ink);
+    border-radius: 2px;
+    font-weight: 800;
+    text-align: center;
   }
 
   .source-number,

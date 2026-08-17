@@ -2,7 +2,8 @@
 import LocalReviewBadge from "../components/LocalReviewBadge.astro";
 import OwnerReviewDrawer from "../components/OwnerReviewDrawer.astro";
 import LanguageSwitcher from "../components/LanguageSwitcher.astro";
-import { siteIdentity } from "../data/site.ts";
+import { externalLinks, siteIdentity } from "../data/site.ts";
+import { isPublicRelease } from "../data/release.ts";
 import { t } from "../data/ui-strings.ts";
 import { switchLocalePath } from "../lib/i18n.ts";
 import type { OwnerReviewKey } from "../data/owner-review.ts";
@@ -32,8 +33,11 @@ const {
 } = Astro.props;
 
 const pathname = Astro.url.pathname;
-const homeHref = locale === "zh" ? "/zh/" : "/";
-const exploreHref = locale === "zh" ? "/zh/explore/" : "/explore/";
+const prefix = locale === "zh" ? "/zh" : "";
+const homeHref = `${prefix}/`;
+const exploreHref = `${prefix}/explore/`;
+const transcriptsHref = `${prefix}/transcripts/`;
+const checklistsHref = `${prefix}/checklists/`;
 const enAlt = switchLocalePath(pathname, "en");
 const zhAlt = switchLocalePath(pathname, "zh");
 ---
@@ -45,7 +49,8 @@ const zhAlt = switchLocalePath(pathname, "zh");
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />
-    <meta name="theme-color" content="#0b0c10" />
+    <meta name="theme-color" content="#0f1729" />
+    <link rel="icon" type="image/svg+xml" href={import.meta.env.BASE_URL + "favicon.svg"} />
     <link rel="alternate" hreflang="en" href={enAlt} />
     <link rel="alternate" hreflang="zh" href={zhAlt} />
     <link rel="alternate" hreflang="x-default" href={enAlt} />
@@ -65,7 +70,19 @@ const zhAlt = switchLocalePath(pathname, "zh");
         <span>{siteIdentity.name}</span>
       </a>
       <nav aria-label="Primary">
-        <a href={exploreHref}>{t(locale, "nav.explore")} <span aria-hidden="true">↗</span></a>
+        <a href={exploreHref}>{t(locale, "nav.topics")}</a>
+        <a class="nav-lib" href={transcriptsHref}>{t(locale, "nav.transcripts")}</a>
+        <a class="nav-lib" href={checklistsHref}>{t(locale, "nav.checklists")}</a>
+        {externalLinks.discordUrl && (
+          <a class="nav-external" href={externalLinks.discordUrl} target="_blank" rel="noopener noreferrer">
+            Discord <span aria-hidden="true">↗</span>
+          </a>
+        )}
+        {externalLinks.tiktokUrl && (
+          <a class="nav-external" href={externalLinks.tiktokUrl} target="_blank" rel="noopener noreferrer">
+            TikTok <span aria-hidden="true">↗</span>
+          </a>
+        )}
         <LanguageSwitcher locale={locale} />
       </nav>
     </header>
@@ -74,7 +91,7 @@ const zhAlt = switchLocalePath(pathname, "zh");
     </main>
     <footer class="site-footer">
       <p>{t(locale, "footer.line1")}</p>
-      <p>{t(locale, "footer.line2")}</p>
+      <p>{isPublicRelease ? t(locale, "footer.line2Public") : t(locale, "footer.line2")}</p>
     </footer>
   </body>
 </html>
@@ -83,7 +100,7 @@ const zhAlt = switchLocalePath(pathname, "zh");
   :root {
     font-family: var(--font-body);
     font-synthesis: none;
-    background: var(--white);
+    background: var(--paper);
     color: var(--ink);
   }
 
@@ -99,7 +116,7 @@ const zhAlt = switchLocalePath(pathname, "zh");
     margin: 0;
     min-width: 20rem;
     overflow-x: hidden;
-    background: var(--white);
+    background: var(--paper);
     color: var(--ink);
   }
 
@@ -145,41 +162,53 @@ const zhAlt = switchLocalePath(pathname, "zh");
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 4.5rem;
-    padding: 0.9rem clamp(1rem, 4vw, 3.5rem);
-    border-bottom: var(--line);
-    background: #fff;
+    min-height: 4.2rem;
+    padding: 0.85rem clamp(1rem, 4vw, 3.5rem);
+    border-bottom: 1px solid rgb(255 255 255 / 10%);
+    background: rgb(15 23 41 / 94%);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
 
   .wordmark {
     display: inline-flex;
-    gap: 0.65rem;
+    gap: 0.6rem;
     align-items: center;
     font-size: 0.78rem;
-    font-weight: 950;
+    font-weight: 800;
     letter-spacing: 0.08em;
     text-decoration: none;
     text-transform: uppercase;
+    color: #fff;
   }
 
   .wordmark span:first-child {
-    padding: 0.35rem 0.42rem;
-    background: var(--ink);
+    padding: 0.32rem 0.42rem;
+    background: var(--cobalt);
     color: #fff;
+    border-radius: 3px;
   }
 
   .site-header nav {
     display: flex;
     align-items: center;
-    gap: clamp(0.9rem, 3vw, 2rem);
+    gap: clamp(0.85rem, 2.4vw, 1.7rem);
   }
 
   .site-header nav > a {
     font-size: 0.82rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-weight: 650;
+    letter-spacing: 0.04em;
     text-decoration: none;
+    color: rgb(242 244 248 / 72%);
+    white-space: nowrap;
+  }
+
+  .site-header nav > a:hover,
+  .site-header nav > a:focus-visible {
+    color: #fff;
   }
 
   main {
@@ -197,17 +226,16 @@ const zhAlt = switchLocalePath(pathname, "zh");
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 900;
-    text-transform: uppercase;
+    font-weight: 700;
   }
 
   .site-footer {
     display: grid;
     gap: 0.5rem;
     padding: 2rem clamp(1rem, 4vw, 3.5rem);
-    border-top: var(--line);
-    background: var(--ink);
-    color: #fff;
+    border-top: 2px solid var(--navy);
+    background: var(--navy);
+    color: rgb(242 244 248 / 88%);
     font-size: 0.78rem;
     letter-spacing: 0.03em;
   }
@@ -217,14 +245,28 @@ const zhAlt = switchLocalePath(pathname, "zh");
   }
 
   :focus-visible {
-    outline: 4px solid var(--yellow);
-    outline-offset: 4px;
+    outline: 3px solid var(--yellow);
+    outline-offset: 3px;
   }
 
   @media (min-width: 48rem) {
     .site-footer {
       grid-template-columns: 1fr auto;
       align-items: center;
+    }
+  }
+
+  /* Library nav entries fold away on narrow screens; the homepage
+     still shows all five entries in full. */
+  @media (max-width: 59.99rem) {
+    .nav-lib {
+      display: none;
+    }
+  }
+
+  @media (max-width: 39.99rem) {
+    .nav-external {
+      display: none;
     }
   }
 

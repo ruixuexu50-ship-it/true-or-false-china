@@ -1,0 +1,169 @@
+---
+// LibraryIndex — the shared shell for the two lightweight library
+// entry pages (/transcripts/ and /checklists/, en + zh).
+//
+// Honest by construction: it only lists entries that really exist.
+// Transcripts: none published yet → an explicit empty state, no
+// fabricated content. Checklists: one real checklist derived from
+// the QR payment topic, linked to a page the current build mode
+// actually emits.
+
+import { getReleasePlan } from "../../data/release.ts";
+import { homeCoverTopicId } from "../../data/site.ts";
+import { getTopicById } from "../../data/topics.ts";
+import { t } from "../../data/ui-strings.ts";
+import type { Locale } from "../../lib/i18n.ts";
+
+interface Props {
+  locale: Locale;
+  variant: "transcripts" | "checklists";
+}
+
+const { locale, variant } = Astro.props;
+const prefix = locale === "zh" ? "/zh" : "";
+
+// The one real checklist today comes from the cover (QR payment)
+// topic. Link to its page when this locale's build emits it;
+// otherwise fall back to the English topic page, which always
+// exists in both build modes.
+const checklistTopic = getTopicById(homeCoverTopicId, locale);
+const releasedHere = checklistTopic
+  ? getReleasePlan(locale).pages.some((page) => page.slug === checklistTopic.slug)
+  : false;
+const checklistHref = checklistTopic
+  ? releasedHere
+    ? `${prefix}/topics/${checklistTopic.slug}/`
+    : `/topics/${checklistTopic.slug}/`
+  : "/explore/";
+---
+
+<div class="libpage">
+  <header class="libpage__head">
+    <p class="libpage__kicker">{t(locale, variant === "transcripts" ? "ts.kicker" : "ck.kicker")}</p>
+    <h1 class="libpage__title">{t(locale, variant === "transcripts" ? "ts.title" : "ck.title")}</h1>
+    <p class="libpage__intro">{t(locale, variant === "transcripts" ? "ts.intro" : "ck.intro")}</p>
+  </header>
+
+  {
+    variant === "transcripts" ? (
+      <p class="libpage__empty">{t(locale, "ts.empty")}</p>
+    ) : (
+      <ul class="libpage__list">
+        <li>
+          <a class="libpage__item" href={checklistHref}>
+            <span class="libpage__item-eyebrow">{t(locale, "ck.kicker")}</span>
+            <span class="libpage__item-title">{t(locale, "ck.qr.title")}</span>
+            <span class="libpage__item-desc">{t(locale, "ck.qr.desc")}</span>
+            <span class="libpage__item-source">{t(locale, "ck.qr.source")}</span>
+          </a>
+        </li>
+      </ul>
+    )
+  }
+
+  <p class="libpage__back">
+    <a href={locale === "zh" ? "/zh/" : "/"}>← {t(locale, "lib.backHome")}</a>
+  </p>
+</div>
+
+<style>
+  .libpage {
+    width: min(46rem, 100%);
+    margin-inline: auto;
+    padding: clamp(3rem, 7vw, 5rem) clamp(1.2rem, 4vw, 3rem);
+    font-family: var(--font-body);
+  }
+  .libpage__kicker {
+    margin: 0 0 0.8rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--coral);
+  }
+  .libpage__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .libpage__intro {
+    max-width: 36rem;
+    margin: 1.1rem 0 0;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+  }
+  .libpage__empty {
+    margin: 2.5rem 0 0;
+    padding: 1.2rem 1.4rem;
+    border: 1.5px dashed var(--line-soft);
+    border-radius: 4px;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+  .libpage__list {
+    display: grid;
+    gap: 1rem;
+    margin: 2.2rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .libpage__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 1.3rem 1.5rem;
+    background: #fff;
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    color: var(--ink);
+    text-decoration: none;
+    box-shadow: var(--shadow-soft);
+    transition: border-color 150ms ease;
+  }
+  .libpage__item:hover,
+  .libpage__item:focus-visible {
+    border-color: var(--cobalt);
+  }
+  .libpage__item:focus-visible {
+    outline: 3px solid var(--cobalt);
+    outline-offset: 2px;
+  }
+  .libpage__item-eyebrow {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cobalt);
+  }
+  .libpage__item-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .libpage__item-desc {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .libpage__item-source {
+    margin-top: 0.4rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--line-soft);
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+  }
+  .libpage__back {
+    margin: 2.8rem 0 0;
+  }
+  .libpage__back a {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--cobalt);
+    text-decoration: underline;
+    text-underline-offset: 0.28em;
+  }
+</style>

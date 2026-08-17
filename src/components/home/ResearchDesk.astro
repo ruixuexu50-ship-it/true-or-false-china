@@ -1,0 +1,387 @@
+---
+// Research Desk — "THREE WAYS IN." three physical objects in the same
+// material language as the Knowledge Cabinet: light panels, ink
+// borders, small feet, hard offset shadows.
+//
+//   READ  → /explore/       paper-stack box (front sheet lifts)
+//   DO    → /checklists/    yellow drawer box (lid tips open)
+//   WATCH → /transcripts/   clapper box (striped arm claps down)
+//
+// Every object is a real link; navigation never depends on JS. Motion
+// is subtle (lift, tip, clap); sounds are optional via the shared
+// object-sound layer (off by default, toggled from the cabinet).
+// Mobile: objects stack; reduced motion: everything static.
+
+import { t } from "../../data/ui-strings.ts";
+import type { Locale } from "../../lib/i18n.ts";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const prefix = locale === "zh" ? "/zh" : "";
+
+const objects = [
+  { kind: "read", href: `${prefix}/explore/`, label: t(locale, "desk.read.label"), desc: t(locale, "desk.read.desc") },
+  { kind: "do", href: `${prefix}/checklists/`, label: t(locale, "desk.do.label"), desc: t(locale, "desk.do.desc") },
+  { kind: "watch", href: `${prefix}/transcripts/`, label: t(locale, "desk.watch.label"), desc: t(locale, "desk.watch.desc") },
+];
+---
+
+<section class="desk" aria-labelledby="desk-title">
+  <span class="section-ghost" aria-hidden="true">03</span>
+  <div class="desk__inner">
+    <header class="desk__head">
+      <p class="section-kicker">{t(locale, "desk.kicker")}</p>
+      <h2 id="desk-title" class="desk__title">{t(locale, "desk.title")}</h2>
+      <p class="desk__sub">{t(locale, "desk.sub")}</p>
+    </header>
+
+    <ul class="desk__objects">
+      {objects.map((obj) => (
+        <li class="desk__slot">
+          <a
+            class={`obj obj--${obj.kind}`}
+            href={obj.href}
+            aria-label={`${obj.label} — ${obj.desc}`}
+            data-desk-object
+          >
+            <span class="obj__head">
+              <span class="obj__text">
+                <span class="obj__label">{obj.label}</span>
+                <span class="obj__desc">{obj.desc}</span>
+              </span>
+              {obj.kind === "read" && (
+                <svg class="obj__badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 11h7M9 14.5h7"/></svg>
+              )}
+              {obj.kind === "do" && (
+                <svg class="obj__badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 015.6 4.9L9 22l-4-1 1-4L16.1 6"/><path d="M13 8l3 3"/></svg>
+              )}
+              {obj.kind === "watch" && (
+                <svg class="obj__badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg>
+              )}
+            </span>
+
+            {obj.kind === "read" && (
+              <span class="obj__body obj__body--paper" aria-hidden="true">
+                <span class="obj__sheet">
+                  <span class="obj__lines"></span>
+                </span>
+              </span>
+            )}
+            {obj.kind === "do" && (
+              <span class="obj__body obj__body--drawer" aria-hidden="true">
+                <span class="obj__cavity"></span>
+                <span class="obj__frontpanel">
+                  <span class="obj__slot"></span>
+                </span>
+              </span>
+            )}
+            {obj.kind === "watch" && (
+              <span class="obj__body obj__body--clap" aria-hidden="true">
+                <span class="obj__arm"></span>
+                <span class="obj__base"></span>
+              </span>
+            )}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .desk {
+    position: relative;
+    overflow: hidden;
+  }
+  .desk__inner {
+    width: min(72rem, 100%);
+    margin-inline: auto;
+    padding: clamp(2.8rem, 6vw, 4.5rem) clamp(1.2rem, 4vw, 3rem) clamp(3rem, 6vw, 4.8rem);
+  }
+  .desk__head {
+    max-width: 44rem;
+    margin-bottom: clamp(1.8rem, 4vw, 2.8rem);
+  }
+  .desk__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4.4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  :lang(zh) .desk__title {
+    text-transform: none;
+  }
+  .desk__sub {
+    margin: 0.7rem 0 0;
+    font-size: 0.94rem;
+    line-height: 1.6;
+    color: rgb(242 244 248 / 72%);
+  }
+
+  .desk__objects {
+    display: grid;
+    gap: clamp(1.2rem, 3vw, 2rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  @media (min-width: 56rem) {
+    .desk__objects {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: end;
+    }
+  }
+
+  /* ── Shared object language ── */
+  .obj {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 0.9rem 0.95rem 1rem;
+    background: linear-gradient(180deg, #fafbfc, var(--obj-panel));
+    border: var(--obj-line);
+    border-radius: 5px;
+    color: var(--obj-ink);
+    text-decoration: none;
+    box-shadow: var(--obj-shadow);
+    transform-style: preserve-3d;
+    transition:
+      transform var(--mot-fast) var(--mot-ease),
+      box-shadow var(--mot-fast) ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Feet. */
+  .obj::before,
+  .obj::after {
+    content: "";
+    position: absolute;
+    bottom: -0.55rem;
+    width: 1.4rem;
+    height: 0.55rem;
+    background: var(--obj-black);
+    border-radius: 0 0 3px 3px;
+  }
+  .obj::before { left: 0.9rem; }
+  .obj::after { right: 0.9rem; }
+
+  .obj:hover,
+  .obj:focus-visible {
+    transform: translateY(-6px);
+    box-shadow: var(--obj-shadow-lift);
+  }
+  .obj:focus-visible {
+    outline: 3px solid var(--obj-yellow);
+    outline-offset: 3px;
+  }
+  .obj:active {
+    transform: translateY(-2px) scale(0.985);
+  }
+
+  .obj__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+  .obj__text {
+    display: grid;
+    gap: 0.15rem;
+  }
+  .obj__label {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .obj__desc {
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+  }
+  .obj__badge {
+    width: 1.35rem;
+    height: 1.35rem;
+    flex: none;
+    opacity: 0.85;
+  }
+
+  .obj__body {
+    position: relative;
+    display: block;
+    height: 6.2rem;
+    transform-style: preserve-3d;
+    perspective: 700px;
+  }
+
+  /* ── READ: paper stack ── */
+  .obj__body--paper {
+    background: var(--obj-black);
+    border: var(--obj-line-thin);
+    border-radius: 3px;
+    padding: 0.5rem 0.55rem;
+  }
+  .obj__sheet {
+    display: block;
+    height: 100%;
+    background:
+      linear-gradient(90deg, transparent 0 82%, var(--obj-red) 82% 83%, transparent 83%),
+      repeating-linear-gradient(180deg, rgb(15 17 21 / 55%) 0 1.5px, transparent 1.5px 7px),
+      linear-gradient(180deg, #fff, #f1f2f4);
+    border: 1px solid rgb(15 17 21 / 45%);
+    border-bottom: 3px solid var(--obj-red);
+    border-radius: 2px;
+    transform-origin: bottom center;
+    transition: transform var(--mot-fast) var(--mot-ease);
+  }
+  .obj:hover .obj__sheet,
+  .obj:focus-visible .obj__sheet {
+    transform: rotateX(-16deg) translateY(-3px);
+  }
+
+  /* ── DO: yellow drawer box ── */
+  .obj--do {
+    background: linear-gradient(180deg, #ffd23d, var(--obj-yellow));
+  }
+  .obj--do .obj__desc {
+    color: rgb(27 20 5 / 75%);
+  }
+  .obj__body--drawer {
+    border-radius: 3px;
+  }
+  .obj__cavity {
+    position: absolute;
+    inset: 0;
+    background: var(--obj-black);
+    border: var(--obj-line-thin);
+    border-radius: 3px;
+  }
+  .obj__frontpanel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #ffd23d, var(--obj-yellow) 70%, #eab200);
+    border: var(--obj-line-thin);
+    border-radius: 3px;
+    transition: transform var(--mot-fast) var(--mot-ease);
+  }
+  .obj__slot {
+    width: 44%;
+    height: 0.8rem;
+    background: var(--obj-black);
+    border-radius: 999px;
+  }
+  .obj:hover .obj__frontpanel,
+  .obj:focus-visible .obj__frontpanel {
+    transform: translateY(0.55rem);
+  }
+
+  /* ── WATCH: clapper box ── */
+  .obj__body--clap {
+    padding-top: 1.35rem;
+  }
+  .obj__base {
+    position: absolute;
+    inset: 1.35rem 0 0;
+    background:
+      radial-gradient(circle at 88% 62%, transparent 0 0.62rem, rgb(15 17 21 / 0) 0),
+      #fff;
+    border: var(--obj-line-thin);
+    border-radius: 3px;
+  }
+  /* Play triangle on the base. */
+  .obj__base::after {
+    content: "";
+    position: absolute;
+    right: 0.7rem;
+    bottom: 0.65rem;
+    width: 0;
+    height: 0;
+    border-left: 0.85rem solid var(--obj-ink);
+    border-top: 0.55rem solid transparent;
+    border-bottom: 0.55rem solid transparent;
+  }
+  .obj__arm {
+    position: absolute;
+    top: 0;
+    left: -0.35rem;
+    right: 0.45rem;
+    height: 1.5rem;
+    background:
+      repeating-linear-gradient(-52deg, var(--obj-red) 0 0.9rem, var(--obj-black) 0.9rem 1.8rem);
+    border: var(--obj-line-thin);
+    border-radius: 3px;
+    transform: rotate(-4deg);
+    transform-origin: left bottom;
+    transition: transform var(--mot-fast) var(--mot-ease);
+    z-index: 2;
+  }
+  .obj:hover .obj__arm,
+  .obj:focus-visible .obj__arm {
+    transform: rotate(0deg) translateY(0.18rem);
+  }
+
+  /* ── Mobile: stack, keep object feel, calm the inner motion ── */
+  @media (max-width: 55.99rem) {
+    .obj__body {
+      height: 5.4rem;
+    }
+    .obj:hover,
+    .obj:focus-visible {
+      transform: none;
+    }
+  }
+
+  /* ── Reduced motion: objects readable, nothing moves ── */
+  @media (prefers-reduced-motion: reduce) {
+    .obj,
+    .obj__sheet,
+    .obj__frontpanel,
+    .obj__arm {
+      transition: none !important;
+    }
+    .obj:hover,
+    .obj:focus-visible,
+    .obj:active {
+      transform: none;
+    }
+    .obj:hover .obj__sheet,
+    .obj:focus-visible .obj__sheet,
+    .obj:hover .obj__frontpanel,
+    .obj:focus-visible .obj__frontpanel,
+    .obj:hover .obj__arm,
+    .obj:focus-visible .obj__arm {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  // Optional micro sounds for the desk objects. Off by default; the
+  // toggle lives on the cabinet. Without sound enabled these handlers
+  // are no-ops; without JS the objects are plain links.
+  import { soundEnabled, playTick, playPop } from "../../scripts/objectSound.ts";
+
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const objects = document.querySelectorAll<HTMLAnchorElement>("[data-desk-object]");
+
+  objects.forEach((obj) => {
+    if (finePointer && !reduceMotion) {
+      obj.addEventListener("pointerenter", () => {
+        if (soundEnabled()) playTick();
+      });
+    }
+    obj.addEventListener("click", () => {
+      if (soundEnabled()) playPop();
+    });
+  });
+</script>

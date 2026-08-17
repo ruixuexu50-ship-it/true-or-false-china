@@ -1,0 +1,18 @@
+---
+import LibraryIndex from "../../components/library/LibraryIndex.astro";
+import { isPublicRelease } from "../../data/release.ts";
+import { siteDescription } from "../../data/site.ts";
+import { t } from "../../data/ui-strings.ts";
+import SiteLayout from "../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout
+  title={t("en", "ts.title")}
+  description={siteDescription}
+  robots={isPublicRelease ? "index,follow" : "noindex,nofollow"}
+  showLocalReviewIndicator={!isPublicRelease}
+  bodyClass="library-page"
+  locale="en"
+>
+  <LibraryIndex locale="en" variant="transcripts" />
+</SiteLayout>

@@ -4,25 +4,23 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("desktop home is a first-frame-loaded cover with a living evidence object", () => {
+test("desktop home leads with the hero proposition and the knowledge cabinet", () => {
   const page = read("../src/pages/index.astro");
-  const source = read("../src/components/home/QuestionSpaceHome.astro");
+  const hero = read("../src/components/home/HomeHero.astro");
   const uiStrings = read("../src/data/ui-strings.ts");
 
-  assert.match(page, /<QuestionSpaceHome coverTopic=\{coverTopic\}/);
-  assert.doesNotMatch(page, /featured|qr-route-working|Continue the question/);
-  assert.match(source, /@media \(min-width: 48rem\)/);
-  assert.match(source, /\.question-space\s*\{[\s\S]*background:/);
-  assert.match(source, /\.question-space__grid\s*\{[\s\S]*grid-template-columns:/);
-  assert.match(source, /\.cover-stage\s*\{/);
-  assert.match(source, /LivingEvidenceObject/);
-  assert.match(source, /PlayableDesk/);
-  assert.match(source, /home\.typeCaseLabel/);
-  assert.match(uiStrings, /"home\.typeCaseLabel": "CURRENT TOPIC COVER"/);
-  assert.match(uiStrings, /"desk\.read\.verb": "READ"/);
-  assert.match(uiStrings, /"desk\.do\.verb": "DO"/);
-  assert.match(uiStrings, /"desk\.watch\.verb": "WATCH"/);
-  assert.doesNotMatch(source, /data-route-block/);
+  assert.match(page, /<HomeHero/);
+  assert.match(page, /<HomeSections/);
+  assert.doesNotMatch(page, /featured\.experience\.image|qr-route-working|Continue the question/);
+  assert.match(hero, /@media \(min-width: 62rem\)/);
+  assert.match(hero, /\.hero\s*\{[\s\S]*background:/);
+  assert.match(hero, /\.hero__inner\s*\{[\s\S]*grid-template-columns:/);
+  assert.match(hero, /KnowledgeCabinet/);
+  assert.match(hero, /home\.headline/);
+  assert.match(hero, /home\.ctaPrimary/);
+  assert.match(uiStrings, /"home\.headline": "Start with what matters\.",/);
+  assert.match(uiStrings, /"home\.methodStrip": "Question → Evidence → Mechanism → Boundary → Impact"/);
+  assert.doesNotMatch(hero, /data-route-block/);
 });
 
 test("desktop Topic heroes share the stage while long reading sections remain bounded", () => {

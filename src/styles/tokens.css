@@ -3,36 +3,87 @@
    visual changes (color, type families, border, shadow).
 
    "整体品牌颜色/字体/边框/阴影换一下" = edit THIS file only.
-   The current values are the present brand (CURRENT ASSUMPTION,
-   not INVARIANT). Component-local CSS stays inside each component.
+
+   v3 brand direction (2026-08-18 homepage visual rescue):
+   - Reference-board palette: brand cobalt #0D3BFF, paper #F7F8FA,
+     soft gray #E7E9EE, ink #0F1115, action yellow #FFC400, coral
+     #FF6B6B. Cool-neutral reading base, deep-blue hero stage, yellow
+     reserved for action/signal highlights, coral for status labels.
+   - Two type personalities: a heavy display sans for headlines and
+     module titles, and a quiet, highly readable sans body face.
    ───────────────────────────────────────────────────────────── */
 
 :root {
   color-scheme: light;
 
-  /* Color */
-  --ink: #111216;
+  /* ── Color ─────────────────────────────────────────────── */
+  /* Cool neutral base */
+  --paper: #f7f8fa; /* cool off-white page base */
+  --paper-2: #e7e9ee; /* soft gray section band */
   --white: #fff;
-  --cobalt: #093dcc;
-  --coral: #ff5b42;
+
+  /* Ink */
+  --ink: #0f1115; /* near-black text */
+  --ink-soft: #4b4e58; /* secondary text */
+
+  /* Navy stages (hero, footer) */
+  --navy: #0f1729;
+  --navy-2: #1b2742;
+
+  /* Brand anchor + accents */
+  --cobalt: #0d3bff; /* brand anchor: active, icons, lines */
+  --coral: #ff6b6b; /* accent: status, small labels, feedback */
+  --yellow: #ffc400; /* action + tiny signal highlights */
   --acid: #b8ef16;
   --pink: #ff2f92;
-  --yellow: #ffd91f;
 
-  /* Typography families.
-     Latin faces come first; Chinese text falls through to PingFang SC /
-     Hiragino / YaHei / Noto Sans SC, so the bilingual site stays adapted
-     in both languages without any per-component font rules. */
-  --font-body:
-    Arial Narrow, Roboto Condensed, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  /* ── Typography ────────────────────────────────────────── */
+  /* Display: heavy editorial sans — strong, credible headline voice
+     for the big proposition and module titles (used at 750–800). */
   --font-display:
-    Impact, Haettenschweiler, "Arial Narrow Bold", Arial Narrow,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
+    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+
+  /* Body: quiet neutral sans, comfortable for long reading. */
+  --font-body:
+    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
     sans-serif;
 
-  /* Border + shadow (the site's shared "ink outline" language) */
-  --line: 2px solid var(--ink);
-  --shadow: 6px 6px 0 var(--ink);
+  /* ── Border + shadow ───────────────────────────────────── */
+  /* v2: finer lines, soft layered shadows instead of offset poster
+     blocks. Components keep their own local decoration on top. */
+  --line: 1.5px solid var(--ink);
+  --line-soft: 1px solid rgb(23 24 29 / 14%);
+  --shadow:
+    0 1px 2px rgb(23 24 29 / 6%), 0 10px 30px rgb(23 24 29 / 10%);
+  --shadow-soft: 0 1px 2px rgb(23 24 29 / 5%);
+
+  /* ── Object system (cabinet + desk objects) ────────────── */
+  /* One material language shared by every homepage object:
+     light panels, thick ink borders, hard offset shadows, small
+     feet. Never glass, never soft SaaS cards. */
+  --obj-ink: #0f1115;
+  --obj-line: 2px solid var(--obj-ink);
+  --obj-line-thin: 1.5px solid var(--obj-ink);
+  --obj-panel: #f4f5f7; /* light object face */
+  --obj-panel-2: #e4e6ea; /* shaded side face */
+  --obj-yellow: #ffc400;
+  --obj-black: #14161c;
+  --obj-lavender: #c9cdf2;
+  --obj-red: #ff4b33;
+  --obj-shadow: 0.7rem 0.8rem 0 rgb(5 10 40 / 38%);
+  --obj-shadow-lift: 1rem 1.1rem 0 rgb(5 10 40 / 46%);
+
+  /* ── Motion vocabulary (the whole site's physics) ─────── */
+  /* HOVER_LIFT: fast feedback. PRESS: instant compression.
+     DRAWER_OPEN: short, elegant, never blocks navigation.
+     TILT: slow ease-out settle. Everything obeys these. */
+  --mot-fast: 170ms;
+  --mot-open: 340ms;
+  --mot-ease: cubic-bezier(0.24, 0.72, 0.28, 1);
+  --mot-ease-out: cubic-bezier(0.16, 0.84, 0.3, 1);
+  --mot-tilt: 260ms;
+  --depth-pop: 26px; /* how far a module travels on open */
 }

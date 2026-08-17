@@ -13,7 +13,8 @@ test("no source file derives Topic identity from array position", () => {
     "../src/pages/index.astro",
     "../src/pages/zh/index.astro",
     "../src/pages/lab/[slug].astro",
-    "../src/components/home/QuestionSpaceHome.astro",
+    "../src/components/home/HomeHero.astro",
+    "../src/components/home/HomeSections.astro",
     "../src/components/home/QrHomeArchive.astro",
     "../src/components/TopicShell.astro",
     "../src/components/ExploreView.astro",
@@ -28,7 +29,7 @@ test("no source file derives Topic identity from array position", () => {
 test("no source file branches on a specific Topic slug for content or presentation", () => {
   const files = [
     "../src/components/TopicShell.astro",
-    "../src/components/home/QuestionSpaceHome.astro",
+    "../src/components/home/HomeSections.astro",
     "../src/components/TopicPageView.astro",
   ].map(read);
 

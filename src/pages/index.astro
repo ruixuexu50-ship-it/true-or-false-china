@@ -1,22 +1,39 @@
 ---
-import QuestionSpaceHome from "../components/home/QuestionSpaceHome.astro";
-import { isPublicRelease, getReleasePlan } from "../data/release.ts";
+import HomeHero from "../components/home/HomeHero.astro";
+import HomeSections from "../components/home/HomeSections.astro";
+import { getReleasePlan, isPublicRelease } from "../data/release.ts";
 import { homeCoverTopicId, siteDescription } from "../data/site.ts";
-import { getTopicById } from "../data/topics.ts";
+import { getTopicById, getTopicsByLocale } from "../data/topics.ts";
 import SiteLayout from "../layouts/SiteLayout.astro";
 
-// The cover Topic comes from explicit editorial config, keyed by stable
-// topicId — never from array position in the topics list.
+// The cover / "currently investigating" Topic comes from explicit
+// editorial config, keyed by stable topicId — never from array position.
 const coverTopic = getTopicById(homeCoverTopicId, "en");
-// Never link to a Topic page the current build mode did not emit.
+
+// Only Topic pages the current build mode actually emits may be
+// linked from the homepage.
 const releasedSlugs = getReleasePlan("en").pages.map((page) => page.slug);
-const coverHref = coverTopic && releasedSlugs.includes(coverTopic.slug)
-  ? undefined
-  : "/explore/";
+const releasedTopics = getTopicsByLocale("en").filter((topic) =>
+  releasedSlugs.includes(topic.slug),
+);
+
+const investigateHref =
+  coverTopic && releasedSlugs.includes(coverTopic.slug)
+    ? `/topics/${coverTopic.slug}/`
+    : "/explore/";
+
+// Real meta for the hero line: latest review date across released Topics.
+const latestReviewDate =
+  releasedTopics.length > 0
+    ? releasedTopics
+        .map((topic) => topic.lastReviewed)
+        .sort()
+        .at(-1) ?? null
+    : null;
 ---
 
 <SiteLayout
-  title="True or False China: Myths and reality."
+  title="True or False China"
   description={siteDescription}
   robots={isPublicRelease ? "index,follow" : "noindex,nofollow"}
   showLocalReviewIndicator={!isPublicRelease}
@@ -24,5 +41,15 @@ const coverHref = coverTopic && releasedSlugs.includes(coverTopic.slug)
   bodyClass="home-page"
   locale="en"
 >
-  <QuestionSpaceHome coverTopic={coverTopic} coverHref={coverHref} locale="en" />
+  <HomeHero
+    locale="en"
+    releasedCount={releasedTopics.length}
+    latestReviewDate={latestReviewDate}
+  />
+  <HomeSections
+    locale="en"
+    investigateTopic={coverTopic}
+    investigateHref={investigateHref}
+    releasedTopics={releasedTopics}
+  />
 </SiteLayout>
